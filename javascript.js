@@ -34,7 +34,6 @@ class Obstacle{
             player.x + player.size > this.x &&
             player.x < this.x + this.size &&
             player.y + player.size > this.y &&
-            player.y < this.x + this.y &&
             player.y < this.y + this.size
         );
     }
@@ -48,7 +47,12 @@ window.addEventListener('keyup', e => keys[e.key] = false)
 let obstacles = [
     new Obstacle(400, canvas.height - 50, 50, 4),
     new Obstacle(300, canvas.height - 50, 50, 4),
+    new Obstacle(200, canvas.height - 90, 50, 4),
 ]
+
+function checkCollisionsFirst() {
+    return obstacles.some(obstacle => obstacle.collidesWith(player));
+}
 
 function jump() {
     if (player.isOnGround) {
@@ -56,14 +60,38 @@ function jump() {
         player.isOnGround = false;
     }
 }
+function moveRight() {
+    player.facing = 'right';
+    const moveAmount = player.speed;
 
+    for (let obstacle of obstacles) {
+        obstacle.x -= moveAmount
+    }
+    if (checkCollisionsFirst()) {
+        for (let obstacle of obstacles) {
+            obstacle.x += moveAmount;
+        }
+    }
+}
+function moveLeft() {
+    player.facing = 'left';
+    const moveAmount = player.speed;
+
+    for (let obstacle of obstacles) {
+        obstacle.x += moveAmount
+    }
+    if (checkCollisionsFirst()) {
+        for (let obstacle of obstacles) {
+            obstacle.x -= moveAmount;
+        }
+    }
+}
 window.addEventListener('click', jump)
 
 function update() {
-    if (keys['ArrowRight'] || keys['d']) player.x += player.speed; player.facing = 'right';
-    if (keys['ArrowLeft'] || keys['a']) player.x -= player.speed; player.facing = 'left';
-    if (keys['ArrowUp'] || keys['w']) jump(); player.facing = 'up';
-    if (keys['ArrowDown'] || keys['s']) player.y += player.speed; player.facing = 'down'
+    if (keys['ArrowRight'] || keys['d']) moveRight();
+    if (keys['ArrowLeft'] || keys['a']) moveLeft();
+    if (keys['ArrowUp'] || keys['w']) jump();
 
     player.x = Math.max(0, Math.min(canvas.width - player.size, player.x))
 
@@ -96,7 +124,7 @@ function update() {
                 }
             } else {
                 if (overlapY > 0) {
-                    player.y = obstacle.y + size;
+                    player.y = obstacle.y + obstacle.size;
                     player.velocityY = 0;
                 } else {
                     player.y = obstacle.y - player.size;
@@ -104,9 +132,6 @@ function update() {
                     player.isOnGround = true;
                 }
             }
-        }
-        if (obstacle.x + obstacle.size < 0) {
-            obstacles.splice(i, 1);
         }
     }
 }
