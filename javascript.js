@@ -17,35 +17,48 @@ let player = {
     facing: 'right',
 };
 
-let obsticle = {
-    x:100,
-    y:100,
-    size: 50,
-    speed: 10,
-    velocityY: 0,
-    gravity: 0.6,
-    isOnGround: false,
-    facing: 'right',
+class Obstacle{
+    constructor (x, y, size, speed, color = "#b51212") {
+        this.x = x;
+        this.y = y;
+        this.size = size;
+        this.speed = speed;
+        this.color = color;
+    }
+    draw(ctx) {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.size, this.size)
+    }
+    collidesWith(player) {
+        return(
+            player.x + player.size > this.x &&
+            player.x < this.x + this.size &&
+            player.y + player.size > this.y &&
+            player.y < this.x + this.size &&
+            player.y < this.y + this.size
+        );
+    }
 }
+// let obsticle = {
+//     x:100,
+//     y:0,
+//     size: 50,
+//     speed: 10,
+//     velocityY: 0,
+//     gravity: 0.6,
+//     isOnGround: false,
+//     facing: 'right',
+// }
 
 let keys = {};
 
 window.addEventListener('keydown', e => keys[e.key] = true)
 window.addEventListener('keyup', e => keys[e.key] = false)
 
-// let isOnGround = false
-
-// async function jump() {
-//     if (!isOnGround) return;
-//     isOnGround = false;
-//     player.y -= player.jumpHeight;
-//     await delay(25);
-//     player.y += player.jumpHeight;
-//     // player.y -= 
-
-//     isOnGround = false;
-//     requestAnimationFrame(jump)
-// }
+let obstacles = [
+    new Obstacle(400, canvas.height - 50, 50, 4),
+    new Obstacle(300, canvas.height - 50, 50, 4),
+]
 
 function jump() {
     if (player.isOnGround) {
@@ -59,7 +72,7 @@ window.addEventListener('click', jump)
 function update() {
     if (keys['ArrowRight'] || keys['d']) player.x += player.speed; player.facing = 'right';
     if (keys['ArrowLeft'] || keys['a']) player.x -= player.speed; player.facing = 'left';
-    if (keys['ArrowUp'] || keys['w']) jump; player.facing = 'up';
+    if (keys['ArrowUp'] || keys['w']) jump(); player.facing = 'up';
     if (keys['ArrowDown'] || keys['s']) player.y += player.speed; player.facing = 'down'
 
     player.x = Math.max(0, Math.min(canvas.width - player.size, player.x))
@@ -76,6 +89,10 @@ function update() {
         player.velocityY = 0;
         player.isOnGround = true;
     }
+    // if (((obsticle.x + obsticle.size) - player.x) )
+    // if (checkCollisions()) {
+    //     console.log('hit')
+    // }
 }
 
 function draw() {
@@ -90,6 +107,11 @@ function draw() {
     // ctx.fillStyle = '#00ffcc';
     // ctx.drawImage(playerImg, player.x, player.y, player.size, player.size);
 
+    // ctx.fillStyle = '#7664c0';
+    // ctx.fillRect(obsticle.x, obsticle.y, obsticle.size, obsticle.size)
+
+    obstacles.forEach(obstacle => obstacle.draw(ctx))
+
     ctx.save();
 
     if (player.facing === 'left') {
@@ -101,6 +123,7 @@ function draw() {
     }
     ctx.restore();
 }
+// obsticle.y = canvas.height - obsticle.size
 
 function gameLoop() {
     update();
