@@ -34,21 +34,11 @@ class Obstacle{
             player.x + player.size > this.x &&
             player.x < this.x + this.size &&
             player.y + player.size > this.y &&
-            player.y < this.x + this.size &&
+            player.y < this.x + this.y &&
             player.y < this.y + this.size
         );
     }
 }
-// let obsticle = {
-//     x:100,
-//     y:0,
-//     size: 50,
-//     speed: 10,
-//     velocityY: 0,
-//     gravity: 0.6,
-//     isOnGround: false,
-//     facing: 'right',
-// }
 
 let keys = {};
 
@@ -89,26 +79,40 @@ function update() {
         player.velocityY = 0;
         player.isOnGround = true;
     }
-    // if (((obsticle.x + obsticle.size) - player.x) )
-    // if (checkCollisions()) {
-    //     console.log('hit')
-    // }
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+        const obstacle = obstacles[i];
+        if (obstacle.collidesWith(player)) {
+            const overlapX = (player.x + player.size / 2) - (obstacle.x + obstacle.size / 2);
+            const overlapY = (player.y + player.size / 2) - (obstacle.y + obstacle.size / 2);
+
+            const minOverlapX = (player.size + obstacle.size) / 2 - Math.abs(overlapX);
+            const minOverlapY = (player.size + obstacle.size) / 2 - Math.abs(overlapY);
+
+            if (minOverlapX < minOverlapY) {
+                if (overlapX > 0) {
+                    player.x = obstacle.x + obstacle.size;
+                } else {
+                    player.x = obstacle.x - player.size;
+                }
+            } else {
+                if (overlapY > 0) {
+                    player.y = obstacle.y + size;
+                    player.velocityY = 0;
+                } else {
+                    player.y = obstacle.y - player.size;
+                    player.velocityY = 0;
+                    player.isOnGround = true;
+                }
+            }
+        }
+        if (obstacle.x + obstacle.size < 0) {
+            obstacles.splice(i, 1);
+        }
+    }
 }
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // ctx.strokeStyle = '#666';
-    // ctx.beginPath();
-    // ctx.moveTo(0, canvas.height);
-    // ctx.lineTo(canvas.width, canvas.height);
-    // ctx.stroke();
-
-    // ctx.fillStyle = '#00ffcc';
-    // ctx.drawImage(playerImg, player.x, player.y, player.size, player.size);
-
-    // ctx.fillStyle = '#7664c0';
-    // ctx.fillRect(obsticle.x, obsticle.y, obsticle.size, obsticle.size)
 
     obstacles.forEach(obstacle => obstacle.draw(ctx))
 
@@ -123,7 +127,6 @@ function draw() {
     }
     ctx.restore();
 }
-// obsticle.y = canvas.height - obsticle.size
 
 function gameLoop() {
     update();
