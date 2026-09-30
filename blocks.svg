@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 792 792">
+  <!-- Generator: Adobe Illustrator 30.7.0, SVG Export Plug-In . SVG Version: 2.1.4 Build 114)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: #594a42;
+      }
+
+      .st0, .st1, .st2 {
+        stroke: #231f20;
+        stroke-miterlimit: 10;
+      }
+
+      .st1 {
+        fill: #9b8579;
+      }
+
+      .st2 {
+        fill: #726658;
+      }
+    </style>
+  </defs>
+  <rect class="st0" width="313.2" height="132"/>
+  <rect class="st1" x="313.2" width="313.2" height="132"/>
+  <rect class="st0" x="626.41" width="165.59" height="132"/>
+  <rect class="st1" x="0" y="132" width="165.59" height="132"/>
+  <rect class="st0" x="165.59" y="132" width="313.2" height="132"/>
+  <rect class="st2" x="478.8" y="132" width="313.2" height="132"/>
+  <rect class="st1" x="0" y="264" width="313.2" height="132"/>
+  <rect class="st0" x="313.2" y="264" width="313.2" height="132"/>
+  <rect class="st1" x="626.41" y="264" width="165.59" height="132"/>
+  <rect class="st2" y="396" width="165.59" height="132"/>
+  <rect class="st0" x="165.59" y="396" width="313.2" height="132"/>
+  <rect class="st1" x="478.8" y="396" width="313.2" height="132"/>
+  <rect class="st1" x="0" y="528" width="313.2" height="132"/>
+  <rect class="st2" x="313.2" y="528" width="313.2" height="132"/>
+  <rect class="st0" x="626.41" y="528" width="165.59" height="132"/>
+  <rect class="st2" x="0" y="660" width="165.59" height="132"/>
+  <rect class="st0" x="165.59" y="660" width="313.2" height="132"/>
+  <rect class="st1" x="478.8" y="660" width="313.2" height="132"/>
+</svg>

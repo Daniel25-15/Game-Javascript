@@ -1,14 +1,27 @@
 <!DOCTYPE html>
 <html>
+    <head>
+        <link rel="icon" href="data:,">
+    </head>
     <style>
         canvas {
-            background: #09dde0;
+            /* background-image: url('backgroundLoop.svg'); */
+            /* background-repeat: no-repeat; */
+            /* background-size: 100% 150%; */
             display: block;
             margin: 15px auto;
         }
+        .explination {
+            font-size: 18pt;
+            font-weight: 400;
+            margin-bottom: -5px;
+            /* align-items: center; */
+            text-align: center;
+        }
     </style>
     <body>
+        <div id="explinations" class="explination">Press 'E' to open and close the inventory</div>
         <canvas id="game" width="750" height="500"></canvas>
-    <script src="javascript.js"></script>
+    <script type="module" src="javascript.js"></script>
     </body>
 </html>
