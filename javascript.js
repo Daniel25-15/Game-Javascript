@@ -2,8 +2,11 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const playerImg = new Image();
+const test = new Image();
+
 
 playerImg.src = 'declan.png'
+test.src = 'judeAndMagdalene.jpg'
 
 let player = {
     x: 50,
@@ -18,23 +21,64 @@ let player = {
 };
 
 class Obstacle{
-    constructor (x, y, size, speed, color = "#b51212") {
+    constructor (x, y, width, height, speed, color = "#b51212") {
         this.x = x;
         this.y = y;
-        this.size = size;
+        this.width = width,
+        this.height = height,
+        // this.size = ;
         this.speed = speed;
         this.color = color;
     }
     draw(ctx) {
         ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.size, this.size)
+        ctx.fillRect(this.x, this.y, this.width, this.height)
     }
     collidesWith(player) {
         return(
             player.x + player.size > this.x &&
-            player.x < this.x + this.size &&
+            player.x < this.x + this.width &&
             player.y + player.size > this.y &&
-            player.y < this.y + this.size
+            player.y < this.y + this.height
+        );
+    }
+}
+
+class inventorySlot {
+    constructor(x, y, width, height, item, color = "#504d4d") {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.item = item;
+        this.color = color;
+        this.visible = true;
+    }
+    draw(ctx) {
+        if (this.visible) {
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        } else {
+            return;
+        }
+        if (this.item) {
+            const paddingMultiplier = 0.7
+            const itemWidth = this.width * paddingMultiplier
+            const itemHeight = this.height * paddingMultiplier
+
+            const itemX = this.x + (this.width - itemWidth) / 2;
+            const itemY = this.y + (this.height - itemHeight) / 2;
+
+            ctx.drawImage(this.item, itemX, itemY, itemWidth, itemHeight);
+        }
+    }
+    containsPoint(px, py) {
+        if (!this.visible) return false;
+        return (
+            px >= this.x &&
+            px <= this.x + this.width &&
+            py >= this.y &&
+            py <= this.y + this.height
         );
     }
 }
@@ -45,10 +89,46 @@ window.addEventListener('keydown', e => keys[e.key] = true)
 window.addEventListener('keyup', e => keys[e.key] = false)
 
 let obstacles = [
-    new Obstacle(400, canvas.height - 50, 50, 4),
-    new Obstacle(300, canvas.height - 50, 50, 4),
-    new Obstacle(200, canvas.height - 90, 50, 4),
+    new Obstacle(400, canvas.height - 50, 50, 50, 4),
+    new Obstacle(300, canvas.height - 50, 50, 50, 4),
+    new Obstacle(200, canvas.height - 90, 50, 50, 4),
+    new Obstacle(100, canvas.height - 50, 50, 50, 4),
 ]
+
+let allInventorySlots = []
+
+const startInventoryX = 50;
+const startInventoryY = 50;
+const inventoryPadding = 10;
+
+const inventorySlotsAmount = 30;
+const itemsPerRow = 10;
+
+for (let i = 0; i < inventorySlotsAmount; i ++) {
+    const column = i % itemsPerRow;
+    const row = Math.floor(i / itemsPerRow);
+
+    const x = startInventoryX + column * (50 + inventoryPadding);
+    const y = startInventoryY + row * (50 + inventoryPadding);
+
+    allInventorySlots.push(new inventorySlot(x, y, 50, 50, null))
+}
+
+// allInventorySlots.push(new inventorySlot(150, 250, 50, 50, true))
+
+function forClickedInventorySlot(){
+    slot.item = itemImage;
+}
+
+function addItemToInventory(itemImage) {
+    for (let slot of allInventorySlots) {
+        if (!slot.item) {
+            forClickedInventorySlot()
+            return true;
+        }
+    }
+    return false;
+}
 
 function checkCollisionsFirst() {
     return obstacles.some(obstacle => obstacle.collidesWith(player));
@@ -86,12 +166,50 @@ function moveLeft() {
         }
     }
 }
-window.addEventListener('click', jump)
+
+function toggleInventory() {
+    for (let slot of allInventorySlots) {
+        slot.visible = !slot.visible;
+    }
+}
+
+function checkInventorySlotsClicked(mouseX, mouseY) {
+    for (let slot of allInventorySlots) {
+        if (slot.containsPoint(mouseX, mouseY)) {
+            if (slot.item) {
+                if (slot.item === playerImg) {
+                    console.log('player image');
+                }
+                slot.item = false
+                return true;
+            }
+            slot.item = playerImg;
+            return true;
+        }
+    }
+    return false;
+}
+
+window.addEventListener('click', (event) => {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    if (checkInventorySlotsClicked(mouseX, mouseY)) return;
+    jump()
+    
+})
+
+window.addEventListener('keydown', e => {
+    if ((e.key === 'e' || e.key == 'I') && !e.repeat) {
+        toggleInventory(playerImg)
+    }
+});
 
 function update() {
     if (keys['ArrowRight'] || keys['d']) moveRight();
     if (keys['ArrowLeft'] || keys['a']) moveLeft();
     if (keys['ArrowUp'] || keys['w']) jump();
+    // if (keys['f']) toggleInventory;
 
     player.x = Math.max(0, Math.min(canvas.width - player.size, player.x))
 
@@ -110,21 +228,21 @@ function update() {
     for (let i = obstacles.length - 1; i >= 0; i--) {
         const obstacle = obstacles[i];
         if (obstacle.collidesWith(player)) {
-            const overlapX = (player.x + player.size / 2) - (obstacle.x + obstacle.size / 2);
-            const overlapY = (player.y + player.size / 2) - (obstacle.y + obstacle.size / 2);
+            const overlapX = (player.x + player.size / 2) - (obstacle.x + obstacle.width / 2);
+            const overlapY = (player.y + player.size / 2) - (obstacle.y + obstacle.height / 2);
 
-            const minOverlapX = (player.size + obstacle.size) / 2 - Math.abs(overlapX);
-            const minOverlapY = (player.size + obstacle.size) / 2 - Math.abs(overlapY);
+            const minOverlapX = (player.size + obstacle.width) / 2 - Math.abs(overlapX);
+            const minOverlapY = (player.size + obstacle.height) / 2 - Math.abs(overlapY);
 
             if (minOverlapX < minOverlapY) {
                 if (overlapX > 0) {
-                    player.x = obstacle.x + obstacle.size;
+                    player.x = obstacle.x + obstacle.width;
                 } else {
                     player.x = obstacle.x - player.size;
                 }
             } else {
                 if (overlapY > 0) {
-                    player.y = obstacle.y + obstacle.size;
+                    player.y = obstacle.y + obstacle.height;
                     player.velocityY = 0;
                 } else {
                     player.y = obstacle.y - player.size;
@@ -140,6 +258,9 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     obstacles.forEach(obstacle => obstacle.draw(ctx))
+
+    allInventorySlots.forEach(inventorySlot => inventorySlot.draw(ctx))
+
 
     ctx.save();
 
