@@ -8,6 +8,7 @@ const playerImg = new Image();
 const test = new Image();
 const blockImg = new Image();
 const bgImage = new Image();
+const hudImg = new Image();
 
 const bgParaFactor = 0.5;
 
@@ -15,6 +16,7 @@ playerImg.src = 'declan.png'
 test.src = 'judeAndMagdalene.jpg'
 blockImg.src = 'blocks.svg'
 bgImage.src = 'backgroundLoop.svg'
+hudImg.src = 'hud-outline.svg'
 
 let player = {
     x: 100,
@@ -23,7 +25,7 @@ let player = {
     speed: 10,
     jumpHeight: -10,
     velocityY: 0,
-    gravity: 0.6,
+    gravity: 0.65,
     isOnGround: false,
     facing: 'right',
 };
@@ -73,6 +75,14 @@ class Obstacle{
             player.y < this.y + this.height
         );
     }
+    collidesWithOther(other) {
+        return(
+            other.x + other.width > this.x &&
+            other.x < this.x + this.width &&
+            other.y + other.health > this.y &&
+            other.y < this.y + this.height
+        );
+    }
     containsPoint(px, py) {
         // if (!this.visible) return false;
         return (
@@ -93,7 +103,7 @@ class inventorySlot {
         this.item = item;
         this.color = color;
         this.visible = false;
-    }
+    };
     draw(ctx) {
         if (this.visible) {
             ctx.fillStyle = this.color;
@@ -123,6 +133,91 @@ class inventorySlot {
         );
     }
 }
+class hudItem {
+    constructor(x, y, width, height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    };
+    draw(ctx) {
+        ctx.drawImage(hudImg, this.x, this.y, this.width, this.height);
+        ctx.font = '48px sans-serif';
+        ctx.fillStyle = 'white';
+        ctx.fillText(`Health ${ healthAmount }`, this.x + 20, this.y + 60);
+    }
+}
+
+// function checkCollisionsEnemyFirst() {
+//     return enemies.some(enemy => 
+//         obstacles.some(obstacle => obstacle.collidesWith(enemy))
+//     )
+// }
+
+class enemyBasic {
+    constructor(x, y, width, height, health, speed) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.health = health;
+        this.speed = speed;
+
+        this.targetX = x;
+        this.targetY = y;
+
+        this.timer = 0;
+        this.intervals = 30;
+
+    }
+    checkCollisionsEnemyFirst() { 
+        return obstacles.some(obstacle => obstacle.collidesWithOther(this))
+    }
+    update() {
+        this.timer++;
+        if (this.timer >= this.intervals) {
+            this.targetX = player.x;
+            this.targetY = player.y;
+            this.timer = 0;
+        }
+
+        if (isOverLaping(this.x, this.y, 50, 50)) {
+            console.log('stuck')
+            this.x += 1
+        }
+
+        let distanceX = this.targetX - this.x;
+        let distanceY = this.targetY - this.y;
+
+        let distance = Math.hypot(distanceX, distanceY);
+
+        if (distance > 5) {
+            let moveX = (distanceX / distance) * this.speed;
+            this.x += moveX
+            if (this.checkCollisionsEnemyFirst()) {
+                this.x -= moveX
+            }
+            
+            // this. y += (distanceY / distance) * this.speed;
+        }
+
+        // if (player.x < this.x) {
+        //     this.x -= this.speed;
+        // } else if (player.x > this.x) {
+        //     this.x += this.speed;
+        // }
+    };
+    draw(ctx) {
+        // ctx.drawImage(test, this.x, this.y, this.width, this.height);
+        ctx.fillStyle = 'red';
+        ctx.fillRect(this.x, this.y, this.width, this.height)
+    }
+}
+
+
+const playerHealth = new hudItem(50, 0, 300, 90)
+
+// const newEnemy = new enemyBasic(100, canvas.height - 50, 50, 50, 100, 0.05)
 
 let keys = {};
 
@@ -136,10 +231,14 @@ let obstacles = [
     // new Obstacle(100, canvas.height - 50, 50, 50, 4),
 ]
 
+let enemies = [
+    new enemyBasic(100, canvas.height - 50, 50, 50, 100, 5)
+]
+
 let allInventorySlots = []
 
 const startInventoryX = 50;
-const startInventoryY = 50;
+const startInventoryY = 100;
 const inventoryPadding = 10;
 
 const inventorySlotsAmount = 30;
@@ -156,6 +255,12 @@ for (let i = 0; i < inventorySlotsAmount; i ++) {
 }
 
 // allInventorySlots.push(new inventorySlot(150, 250, 50, 50, true))
+
+let healthAmount = 100;
+
+function dealDamageToPlayer(damageAmount) {
+    healthAmount -= damageAmount;
+}
 
 function forClickedInventorySlot(itemImage) {
     for (let slot of allInventorySlots) {
@@ -176,6 +281,7 @@ function checkCollisionsFirst() {
     return obstacles.some(obstacle => obstacle.collidesWith(player));
 }
 
+
 function jump() {
     if (player.isOnGround) {
         player.velocityY = player.jumpHeight;
@@ -191,10 +297,15 @@ function moveRight() {
     for (let obstacle of obstacles) {
         obstacle.x -= moveAmount
     }
+    for (let enemy of enemies) {
+        enemy.x -= moveAmount
+    }
     if (checkCollisionsFirst()) {
         for (let obstacle of obstacles) {
             obstacle.x += moveAmount;
-  
+        }
+        for (let enemy of enemies) {
+            enemy.x += moveAmount
         }
         cameraX -= moveAmount
     }
@@ -208,10 +319,16 @@ function moveLeft() {
     for (let obstacle of obstacles) {
         obstacle.x += moveAmount
     }
+    for (let enemy of enemies) {
+        enemy.x += moveAmount
+    }
     if (checkCollisionsFirst()) {
         for (let obstacle of obstacles) { 
             obstacle.x -= moveAmount;
         }
+    for (let enemy of enemies) {
+        enemy.x -= moveAmount
+    }
         cameraX += moveAmount;
     }
 }
@@ -239,6 +356,7 @@ function buildObstacleAtPlayer() {
     }
 }
 
+// dealDamageToPlayer(10)
 
 function toggleInventory() {
     for (let slot of allInventorySlots) {
@@ -260,6 +378,16 @@ function checkInventorySlotsClicked(mouseX, mouseY) {
                     }
                     return true;
                 }
+                if (slot.item === test) {
+                    if (healthAmount === 100 || healthAmount >= 100) {
+                        return true;
+                    }
+                    if (healthAmount <= 90) {
+                        healthAmount += 10;
+                    } else {
+                        healthAmount = 100
+                    }
+                }
                 slot.item = false
                 return true;
             }
@@ -271,16 +399,6 @@ function checkInventorySlotsClicked(mouseX, mouseY) {
 }
 
 function checkObstaclesClicked(mouseX, mouseY) {
-    // for (let obstacle of obstacles) {
-    //     if (obstacle.containsPoint(mouseX, mouseY)) {
-    //         console.log('Block Clicked')
-    //         obstacles.pop(obstacle)
-    //         addItemToInventory(blockImg)
-    //         return true;
-    //     }
-    // }
-    // return false;
-
     for (let i = 0; i < obstacles.length; i++) {
         const obstacle = obstacles[i]
         if (obstacle.containsPoint(mouseX, mouseY)) {
@@ -298,6 +416,8 @@ function checkObstaclesClicked(mouseX, mouseY) {
 }
 
 addItemToInventory(blockImg)
+addItemToInventory(test)
+// dealDamageToPlayer(5)
 
 function isOverLaping(newX, newY, width, height) {
     return obstacles.some(obstacle => {
@@ -375,7 +495,15 @@ function update() {
     player.velocityY += player.gravity;
     player.y += player.velocityY;
 
+    if (healthAmount > 100) {
+        healthAmount = 100
+    }
+
     const groundLevel = canvas.height - player.size;
+
+    for (let enemy of enemies) {
+        enemy.update()
+    }
 
     if (player.y > groundLevel) {
         player.y = groundLevel;
@@ -419,6 +547,11 @@ function draw() {
     obstacles.forEach(obstacle => obstacle.draw(ctx))
 
     allInventorySlots.forEach(inventorySlot => inventorySlot.draw(ctx))
+
+    playerHealth.draw(ctx)
+    
+    enemies.forEach(enemy => enemy.draw(ctx))
+    // newEnemy.draw(ctx)
 
     ctx.save();
 
