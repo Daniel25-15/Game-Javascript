@@ -634,7 +634,7 @@ let currentMouseY = 0;
 window.addEventListener('keydown', e => {
     if ((e.key === 'e' || e.key == 'E') && !e.repeat) {
         const explinationTitle = document.getElementById('explinations')
-        explinationTitle.textContent = 'Good Job!'
+        explinationTitle.textContent = ' '
         toggleInventory(playerImg)
     }
 });
