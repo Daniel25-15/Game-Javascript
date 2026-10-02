@@ -1,7 +1,7 @@
 // import { buildMap } from './maps.js';
 
 export const canvas = document.getElementById('game');
-export const ctx = canvas.getContext('2d');
+export const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true});
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const playerImg = new Image();
@@ -11,6 +11,7 @@ const bgImage = new Image();
 const hudImg = new Image();
 const shovelImg = new Image();
 const placeholder = new Image();
+const arrowImg = new Image();
 
 const bgParaFactor = 0.5;
 
@@ -21,6 +22,7 @@ bgImage.src = 'backgroundLoop.svg'
 hudImg.src = 'hud-outline.svg'
 shovelImg.src = 'shovel.png'
 placeholder.src = 'placeholder.png'
+arrowImg.src = 'arrow.png'
 
 // let player = {
 //     x: 100,
@@ -46,6 +48,7 @@ class playerClass {
         this.isOnGround = false;
         this.facing = 'right';
         this.currentItem = NaN;
+        this.armorMultiplier = 1;
     };
     draw(ctx) {
         ctx.save();
@@ -267,10 +270,23 @@ class enemyBasic {
     }
 }
 
-function drawProjectile(ctx, img, x, y, width, height, angleInRadians) {
+window.addEventListener('mousemove', (event) => {
+    const rect = canvas.getBoundingClientRect();
+    currentMouseX = event.clientX - rect.left;
+    currentMouseY = event.clientY - rect.top;
+
+})
+
+function drawProjectile(ctx, img, x, y, width, height, angle) {
+    const projectileDX = currentMouseX - x;
+    const projectileDY = currentMouseY - y;
+
+    const projectileAngle = Math.atan2(projectileDY, projectileDX)
+
     ctx.save()
-    ctx.translate(x + width / 2, y + height / 2);
-    ctx.rotate(angleInRadians);
+    // ctx.translate(x + width / 2, y + height / 2);
+    ctx.translate(x, y)
+    ctx.rotate(angle + Math.PI / 2);
     ctx.drawImage(img, -width / 2, -height / 2, width, height);
     ctx.restore();
 }
@@ -298,7 +314,7 @@ class projectile {
         return(
             other.x + other.width > this.x &&
             other.x < this.x + this.width &&
-            other.y + other.health > this.y &&
+            other.y + other.height > this.y &&
             other.y < this.y + this.height
         );
     };
@@ -309,7 +325,12 @@ class projectile {
         this.y += this.vy;
     };
     draw(ctx) {
-        drawProjectile(ctx, test, this.x, this.y, this.width, this.height, this.angle);
+        // ctx.save();
+        // ctx.translate(this.x, this.y);
+        // ctx.rotate(-90)
+        drawProjectile(ctx, arrowImg, this.x, this.y, this.width, this.height, this.angle);
+        
+        // ctx.restore();
     };  
 }
 
@@ -359,7 +380,7 @@ for (let i = 0; i < inventorySlotsAmount; i ++) {
 let healthAmount = 100;
 
 function dealDamageToPlayer(damageAmount) {
-    healthAmount -= damageAmount;
+    healthAmount -= damageAmount / player.armorMultiplier;
 }
 
 function forClickedInventorySlot(itemImage) {
@@ -501,6 +522,8 @@ function checkInventorySlotsClicked(mouseX, mouseY) {
                 return true;
             }
             // slot.item = playerImg;
+            player.currentItem = null;
+
             return true;
         }
     }
@@ -586,7 +609,8 @@ window.addEventListener('click', (event) => {
     if (checkInventorySlotsClicked(mouseX, mouseY)) return;
     if (checkObstaclesClicked(mouseX, mouseY)) return;
     if (player.currentItem === placeholder) {
-        projectiles.push(new projectile(player.x, player.y, mouseX, mouseY, 8));
+        console.log('projectile')
+        projectiles.push(new projectile(player.x + player.size, player.y + player.size - 5, mouseX, mouseY, 8));
     }
 })
 
@@ -599,12 +623,7 @@ window.addEventListener('keydown', (event) => {
 let currentMouseX = 0;
 let currentMouseY = 0;
 
-window.addEventListener('mousemove', (event) => {
-    const rect = canvas.getBoundingClientRect();
-    currentMouseX = event.clientX - rect.left;
-    currentMouseY = event.clientY - rect.top;
 
-})
 
 // window.addEventListener('keydown', (event) => {
 //     if ((event.key === 'r' || event.key === 'R') && !event.repeat) {
@@ -635,12 +654,6 @@ function update() {
     if (healthAmount > 100) {
         healthAmount = 100
     }
-
-    // const rect = canvas.getBoundingClientRect();
-    // const mouseX = event.clientX - rect.left;
-    // const mouseY = event.clientY - rect.top;
-    // new projectile(200, canvas.height - 100, mouseX, mouseY)
-
 
     const groundLevel = canvas.height - player.size;
 
