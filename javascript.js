@@ -96,7 +96,7 @@ function drawBackground() {
 }
 
 class Obstacle{
-    constructor (x, y, width, height, speed, color = "#b51212") {
+    constructor (x, y, width, height, speed, image, color = "#b51212") {
         this.x = x;
         this.y = y;
         this.width = width,
@@ -104,11 +104,12 @@ class Obstacle{
         // this.size = ;
         this.speed = speed;
         this.color = color;
+        this.image = image;
     }
     draw(ctx) {
         // ctx.fillStyle = this.color;
         // ctx.fillRect(this.x, this.y, this.width, this.height)
-        ctx.drawImage(blockImg, this.x, this.y, this.width, this.height)
+        ctx.drawImage(this.image, this.x, this.y, this.width, this.height)
     }
     collidesWith(player) {
         return(
@@ -556,18 +557,33 @@ function checkInventorySlotsClicked(mouseX, mouseY) {
     return false;
 }
 
+let lootpool = [test, blockImg]
+
 function checkObstaclesClicked(mouseX, mouseY) {
     if (player.currentItem === shovelImg) {
         for (let i = 0; i < obstacles.length; i++) {
             const obstacle = obstacles[i]
             if (obstacle.containsPoint(mouseX, mouseY)) {
                 console.log('Block Clicked');
-                const addedItem = addItemToInventory(blockImg);
-                if (addedItem) {
-                    obstacles.splice(i, 1);
-                    return true;
-                } else {
-                    return false;
+                if (obstacle.image === blockImg) {
+                    const addedItem = addItemToInventory(blockImg);
+                    if (addedItem) {
+                        obstacles.splice(i, 1);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+                if (obstacle.image === placeholder) {
+                    const randomLootPoolIndex = Math.floor(Math.random() * lootpool.length);
+                    const chosenLootPool = lootpool[randomLootPoolIndex];
+                    const addedItem = addItemToInventory(chosenLootPool);
+                    if (addedItem) {
+                        obstacles.splice(i, 1);
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
             }
         }
@@ -627,9 +643,12 @@ function addObstacle(obstacleX, obstacleY, width = 50, height = 50, speed) {
         return false;
     }
 
-    obstacles.push(new Obstacle(gridX, gridY, width, height, speed))
+    obstacles.push(new Obstacle(gridX, gridY, width, height, speed, blockImg))
     return true;
 }
+
+obstacles.push(new Obstacle(350, canvas.height - 50, 50, 50, 4, placeholder))
+
 function buildMap(mapNumber) {
     if (mapNumber === 'mapDefault') {
         // console.log('imported file')
