@@ -587,6 +587,12 @@ function clearInventory() {
             slot.item = null
         }
     }
+    const hasStarterItem = allInventorySlots.some(slot => slot.item === shovelImg);
+        if (hasStarterItem) {
+            console.log('Has Shovel');
+            return;
+        }
+    addItemToInventory(shovelImg)
 }
 function playerDeath() {
     clearInventory();
@@ -595,8 +601,6 @@ function playerDeath() {
 
 window.addEventListener('keydown', e => {
     if ((e.key === 'g' || e.key == 'G') && !e.repeat) {
-        clearInventory()
-        addItemToInventory(shovelImg)
     }
 });
 
