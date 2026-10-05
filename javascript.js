@@ -49,6 +49,7 @@ class playerClass {
         this.facing = 'right';
         this.currentItem = NaN;
         this.armorMultiplier = 1;
+        this.damageMultiplier = 1;
     };
     draw(ctx) {
         ctx.save();
@@ -65,6 +66,7 @@ class playerClass {
                 ctx.drawImage(this.currentItem, this.x + this.size, this.y + this.size / 2 - 5, 20, 20,)
             }
         }
+        // ctx.fillRect(this.x + 50, this.y, this.size, this.size)
 
         ctx.restore();
     }
@@ -383,6 +385,20 @@ function dealDamageToPlayer(damageAmount) {
     healthAmount -= damageAmount / player.armorMultiplier;
 }
 
+function attackFromPlayer(damageAmount) {
+    const attackLeft = player.x - 100;
+    const attackRight = (player.x + player.size) + 100;
+    for (let enemy of enemies) {
+        const enemyLeft = enemy.x;
+        const enemyRight = enemy.x + enemy.width;
+        const attackRange = enemyRight >= attackLeft && enemyLeft <= attackRight;
+        if (attackRange) {
+            console.log('dealt damage')
+            enemy.health -= (damageAmount * player.damageMultiplier)
+        }
+    }
+}
+
 function forClickedInventorySlot(itemImage) {
     for (let slot of allInventorySlots) {
         slot.item = itemImage;
@@ -494,6 +510,15 @@ function checkInventorySlotsClicked(mouseX, mouseY) {
                 }
                 if (slot.item === blockImg) {
                     if (player.isOnGround){
+                        let offset
+                        if (player.facing === 'left') {
+                            offset = -40
+                        } else {
+                            offset = (player.x + player.size) - 75
+                        }
+                        const buildObstacleX = player.x + offset;
+                        const buildObstacleY = canvas.height - 50;
+                        if (isOverLaping(buildObstacleX, buildObstacleY, 50, 50)) return true;
                         buildObstacleAtPlayer()
                         slot.item = false
                     }
@@ -502,6 +527,7 @@ function checkInventorySlotsClicked(mouseX, mouseY) {
                 if (slot.item === shovelImg) {
                     console.log('shovel')
                     player.currentItem = shovelImg;
+                    player.damageMultiplier = 1.5;
                     return true;
                 } 
                 if (slot.item === test) {
@@ -554,6 +580,26 @@ addItemToInventory(placeholder)
 addItemToInventory(blockImg)
 addItemToInventory(test)
 // dealDamageToPlayer(5)
+
+function clearInventory() {
+    for (let slot of allInventorySlots) {
+        if (slot.item !== shovelImg) {
+            slot.item = null
+        }
+    }
+}
+function playerDeath() {
+    clearInventory();
+    healthAmount = 100;
+}
+
+window.addEventListener('keydown', e => {
+    if ((e.key === 'g' || e.key == 'G') && !e.repeat) {
+        clearInventory()
+        addItemToInventory(shovelImg)
+    }
+});
+
 
 function isOverLaping(newX, newY, width, height) {
     return obstacles.some(obstacle => {
@@ -611,6 +657,8 @@ window.addEventListener('click', (event) => {
     if (player.currentItem === placeholder) {
         console.log('projectile')
         projectiles.push(new projectile(player.x + player.size, player.y + player.size - 5, mouseX, mouseY, 8));
+    } else {
+        attackFromPlayer(10)
     }
 })
 
@@ -660,11 +708,16 @@ function update() {
     for (let enemy of enemies) {
         enemy.update()
     }
+    enemies = enemies.filter(enemy => enemy.health > 0);
 
     if (player.y > groundLevel) {
         player.y = groundLevel;
         player.velocityY = 0;
         player.isOnGround = true;
+    }
+
+    if (healthAmount <= 0) {
+        playerDeath()
     }
 
     for (let i = projectiles.length - 1; i >= 0; i--) {
