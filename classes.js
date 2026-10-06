@@ -6,6 +6,8 @@ const hudImg = new Image();
 const shovelImg = new Image();
 const placeholder = new Image();
 const arrowImg = new Image();
+const damagedImg = new Image();
+
 
 const bgParaFactor = 0.5;
 
@@ -17,6 +19,8 @@ hudImg.src = 'hud-outline.svg'
 shovelImg.src = 'shovel.png'
 placeholder.src = 'placeholder.png'
 arrowImg.src = 'arrow.png'
+damagedImg.src = 'damage.png'
+
 
 export class playerClass {
     constructor(x, y, size, speed) {
@@ -33,7 +37,29 @@ export class playerClass {
         this.armorMultiplier = 1;
         this.damageMultiplier = 1;
         this.rotationAngle = 0;
+
+        this.isAttacking = false;
+        this.attackProgress = 0;
+        this.attackSpeed = 0.1;
     };
+    attack() {
+        if (!this.isAttacking) {
+            this.isAttacking = true;
+            this.attackProgress = 0;
+        }
+    }
+    updateAttack() {
+        if (this.isAttacking) {
+            this.attackProgress += this.attackSpeed;
+            this.rotationAngle = Math.sin(this.attackProgress * Math.PI) * (Math.PI / 2);
+            
+            if (this.attackProgress >= 1) {
+                this.isAttacking = false;
+                this.attackProgress = 0;
+                this.rotationAngle = 0;
+            }
+        }
+    }
     draw(ctx) {
         ctx.save();
         if (this.facing === 'left') {
@@ -86,11 +112,15 @@ export class Obstacle{
         this.speed = speed;
         this.color = color;
         this.image = image;
+        this.health = 2;
     }
     draw(ctx) {
         // ctx.fillStyle = this.color;
         // ctx.fillRect(this.x, this.y, this.width, this.height)
         ctx.drawImage(this.image, this.x, this.y, this.width, this.height)
+        if (this.health !== 2) {
+            ctx.drawImage(damagedImg, this.x, this.y, this.width, this.height)
+        }
     }
     collidesWith(player) {
         return(

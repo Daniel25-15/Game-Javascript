@@ -15,6 +15,8 @@ const placeholder = new Image();
 const arrowImg = new Image();
 const axImg = new Image();
 const crateImg = new Image();
+const enemyImg = new Image();
+const damagedImg = new Image();
 
 const bgParaFactor = 0.5;
 
@@ -28,6 +30,8 @@ placeholder.src = 'placeholder.png'
 arrowImg.src = 'arrow.png'
 axImg.src = 'ax.png'
 crateImg.src = 'crate.png'
+enemyImg.src = 'enemy.png'
+damagedImg.src = 'damage.png'
 
 // let player = {
 //     x: 100,
@@ -97,7 +101,7 @@ function drawBackground() {
 // }
 
 class enemyBasic {
-    constructor(x, y, width, height, health, speed) {
+    constructor(x, y, width, height, health, speed, image) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -108,6 +112,7 @@ class enemyBasic {
         this.velocityY = 0;
         this.isOnGround = false;
         this.jumpHeight = -10;
+        this.image = image;
 
         this.targetX = x;
         this.targetY = y;
@@ -167,11 +172,9 @@ class enemyBasic {
             let moveY = (distanceY / distance) * this.speed;
             
             this.x += moveX
-            // this.y += moveY
 
             if (this.checkCollisionsEnemyFirst()) {
                 this.x -= moveX
-                // this.y -= moveY
             }            
         }
         if (distance <= 25) {
@@ -180,21 +183,42 @@ class enemyBasic {
                 this.cooldown = 60;
             }
         }
-        if (healthAmount <= 0) {
-            console.log('End')
-        }
     };
 
     draw(ctx) {
         // ctx.drawImage(test, this.x, this.y, this.width, this.height);
-        ctx.fillStyle = 'red';
-        ctx.fillRect(this.x, this.y, this.width, this.height)
+        // ctx.fillStyle = 'red';
+        // ctx.fillRect(this.x, this.y, this.width, this.height)
+        ctx.drawImage(this.image, this.x, this.y, this.width, this.height)
         ctx.font = '16px sans-serif';
         ctx.fillStyle = 'white';
-        ctx.fillText(`Health ${ this.health }`, this.x - this.width / 4, this.y - 10);
-        ctx.fillText(`Jump Delay ${ this.jumpTimer }`, this.x - this.width / 4, this.y - 25);
+        // ctx.fillText(`Health ${ this.health }`, this.x - this.width / 4, this.y - 10);
+        if (this.health >= 100) {
+            ctx.fillStyle = 'green'
+            ctx.fillText(`█████`, (this.x + this.width / 2) - 40, this.y - 10);
+        }
+        if (this.health >= 75 && this.health < 100) {
+            ctx.fillStyle = 'yellow'
+            ctx.fillText(`████ `, (this.x + this.width / 2) - 40, this.y - 10);
+        }
+        if (this.health >= 50 && this.health < 75) {
+            ctx.fillStyle = 'orange'
+            ctx.fillText(`███  `, (this.x + this.width / 2) - 40, this.y - 10);
+        }
+        if (this.health >= 25 && this.health < 50) {
+            ctx.fillStyle = 'red'
+            ctx.fillText(`██   `, (this.x + this.width / 2) - 40, this.y - 10);
+        }
+        if (this.health >= 0 && this.health < 25) {
+            ctx.fillStyle = '#820707'
+            ctx.fillText(`█   `, (this.x + this.width / 2) - 40, this.y - 10);
+        }
+        
+        // ctx.fillText(`Jump Delay ${ this.jumpTimer }`, this.x - this.width / 4, this.y - 30);
     }
 }
+
+// █
 
 window.addEventListener('mousemove', (event) => {
     const rect = canvas.getBoundingClientRect();
@@ -218,7 +242,7 @@ function drawProjectile(ctx, img, x, y, width, height, angle) {
 }
 
 class projectile {
-    constructor(x, y, mouseX, mouseY, speed = 8) {
+    constructor(x, y, mouseX, mouseY, image, speed = 8) {
         this.x = x;
         this.y = y;
         this.width = 20;
@@ -226,6 +250,7 @@ class projectile {
         this.secondX = mouseX;
         this.secondY = mouseY;
         this.speed = speed;
+        this.image = image;
 
         let dx = mouseX - this.x;
         let dy = mouseY - this.y;
@@ -254,7 +279,7 @@ class projectile {
         // ctx.save();
         // ctx.translate(this.x, this.y);
         // ctx.rotate(-90)
-        drawProjectile(ctx, arrowImg, this.x, this.y, this.width, this.height, this.angle);
+        drawProjectile(ctx, this.image, this.x, this.y, this.width, this.height, this.angle);
         
         // ctx.restore();
     };  
@@ -277,7 +302,7 @@ let obstacles = [
 ]
 
 let enemies = [
-    new enemyBasic(100, canvas.height - 50, 50, 50, 100, 5)
+    new enemyBasic(100, canvas.height - 50, 50, 50, 100, 5, enemyImg)
 ]
 
 function spawnEnemy(x, width, height, health, speed) {
@@ -454,7 +479,8 @@ function checkInventorySlotsClicked(mouseX, mouseY) {
                         const buildObstacleY = canvas.height - 50;
                         if (isOverLaping(buildObstacleX, buildObstacleY, 50, 50)) return true;
                         buildObstacleAtPlayer()
-                        slot.item = false
+                        // slot.item = false
+                        return true;
                     }
                     return true;
                 }
@@ -504,26 +530,33 @@ function checkObstaclesClicked(mouseX, mouseY) {
             const obstacle = obstacles[i]
             if (obstacle.containsPoint(mouseX, mouseY)) {
                 console.log('Block Clicked');
-                if (obstacle.image === blockImg) {
-                    const addedItem = addItemToInventory(blockImg);
-                    if (addedItem) {
-                        obstacles.splice(i, 1);
-                        return true;
-                    } else {
-                        return false;
-                    }
+                if (obstacle.health === 2) {
+                    obstacle.health -= 1;
+                    return;
                 }
-                if (obstacle.image === crateImg) {
-                    const randomLootPoolIndex = Math.floor(Math.random() * lootpool.length);
-                    const chosenLootPool = lootpool[randomLootPoolIndex];
-                    const addedItem = addItemToInventory(chosenLootPool);
-                    if (addedItem) {
-                        obstacles.splice(i, 1);
-                        return true;
-                    } else {
-                        return false;
-                    }
+                if (obstacle.health !== 2) {
+
                 }
+                    if (obstacle.image === blockImg) {
+                        const addedItem = addItemToInventory(blockImg);
+                        if (addedItem) {
+                            obstacles.splice(i, 1);
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                    if (obstacle.image === crateImg) {
+                        const randomLootPoolIndex = Math.floor(Math.random() * lootpool.length);
+                        const chosenLootPool = lootpool[randomLootPoolIndex];
+                        const addedItem = addItemToInventory(chosenLootPool);
+                        if (addedItem) {
+                            obstacles.splice(i, 1);
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
             }
         }
         return false;
@@ -533,6 +566,7 @@ function checkObstaclesClicked(mouseX, mouseY) {
 addItemToInventory(shovelImg)
 addItemToInventory(axImg)
 addItemToInventory(placeholder)
+addItemToInventory(blockImg)
 addItemToInventory(blockImg)
 addItemToInventory(test)
 // dealDamageToPlayer(5)
@@ -544,11 +578,13 @@ function clearInventory() {
         }
     }
     const hasStarterItem = allInventorySlots.some(slot => slot.item === shovelImg);
-        if (hasStarterItem) {
+    const hasStarterItemSecond = allInventorySlots.some(slot => slot.item === axImg);
+        if (hasStarterItem && hasStarterItemSecond) {
             console.log('Has Shovel');
             return;
         }
     addItemToInventory(shovelImg)
+    addItemToInventory(axImg)
 }
 function playerDeath() {
     clearInventory();
@@ -619,9 +655,10 @@ window.addEventListener('click', (event) => {
     if (checkObstaclesClicked(mouseX, mouseY)) return;
     if (player.currentItem === placeholder) {
         console.log('projectile')
-        projectiles.push(new projectile(player.x + player.size, player.y + player.size - 5, mouseX, mouseY, 8));
+        projectiles.push(new projectile(player.x + player.size, player.y + player.size - 5, mouseX, mouseY, arrowImg,8));
     } else {
         attackFromPlayer(10)
+        player.attack()
     }
 })
 
@@ -693,11 +730,11 @@ function update() {
         player.isOnGround = true;
     }
 
-
-
     if (healthAmount <= 0) {
         playerDeath()
     }
+
+    player.updateAttack()
 
     for (let i = projectiles.length - 1; i >= 0; i--) {
         const p = projectiles[i];
@@ -763,7 +800,6 @@ function update() {
                         }
                     }
                 }
-
             }
         }
     }
