@@ -116,6 +116,8 @@ class enemyBasic {
 
         this.targetX = x;
         this.targetY = y;
+        this.moveAmountX = 0;
+        this.moveAmountY = 0;
 
         this.timer = 0;
         this.intervals = 30;
@@ -132,6 +134,14 @@ class enemyBasic {
             this.velocityY = this.jumpHeight;
             this.isOnGround = false;
         }
+    }
+    collidesWithOther(other) {
+        return(
+            other.x + other.width > this.x &&
+            other.x < this.x + this.width &&
+            other.y + other.height > this.y &&
+            other.y < this.y + this.height
+        );
     }
     update() {
         this.timer++;
@@ -171,6 +181,9 @@ class enemyBasic {
             let moveX = (distanceX / distance) * this.speed;
             let moveY = (distanceY / distance) * this.speed;
             
+            this.moveAmountX = moveX;
+            this.moveAmountY = moveY;
+
             this.x += moveX
 
             if (this.checkCollisionsEnemyFirst()) {
@@ -302,19 +315,27 @@ let obstacles = [
 ]
 
 let enemies = [
-    new enemyBasic(100, canvas.height - 50, 50, 50, 100, 5, enemyImg)
+    // new enemyBasic(100, canvas.height - 50, 50, 50, 100, 5, enemyImg)
 ]
 
-function spawnEnemy(x, width, height, health, speed) {
-    enemies.push(new enemyBasic(x, canvas.height - height, width, height, health, speed))
+function spawnEnemy(x, width, height, health, speed, image) {
+    enemies.push(new enemyBasic(x, canvas.height - height, width, height, health, speed, image))
 }
 
+let numberOfEnemies = 3
+let enemyHealth = 100
+let currentWave = 0;
+
 function summonWaves() {
-    for (let i = 0; i < 5; i++) {
-        spawnEnemy(200 + (i * 100), 50, 50, 100, 5);
-        console.log(5 + (i * 1.15))
+    currentWave++;
+    if (currentWave % 5 === 0) enemyHealth += 25;
+    for (let ee = 0; ee < numberOfEnemies; ee++) {
+        spawnEnemy(200 + (ee * 100), 50, 50, enemyHealth, 5, enemyImg);
     }
+    
 }
+
+summonWaves()
 
 
 
@@ -745,6 +766,20 @@ function update() {
             hitEnemy.health -= 10;
             console.log('hit')
             console.log(`Enemy Health: ${ hitEnemy.health }`)
+        }
+    }
+
+    for (let enemy of enemies) {
+        const otherEnemy = enemies.find(enemyOver => 
+            enemy !== enemyOver && enemy.collidesWithOther(enemyOver)
+        );
+        if (otherEnemy) {
+            const pushBack = Math.max(1, Math.abs(enemy.moveAmountX));
+            if (enemy.x < otherEnemy.x) {
+                enemy.x -= pushBack;
+            } else {
+                enemy.x += pushBack;
+            }
         }
     }
 
