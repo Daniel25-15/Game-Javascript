@@ -1,3 +1,5 @@
+import { damagedImg } from "./javascript.js"; 
+
 const playerImg = new Image();
 const test = new Image();
 const blockImg = new Image();
@@ -6,20 +8,20 @@ const hudImg = new Image();
 const shovelImg = new Image();
 const placeholder = new Image();
 const arrowImg = new Image();
-const damagedImg = new Image();
+// const damagedImg = new Image();
 
 
 const bgParaFactor = 0.5;
 
-playerImg.src = 'declan.png'
-test.src = 'judeAndMagdalene.jpg'
-blockImg.src = 'blocks.svg'
-bgImage.src = 'backgroundLoop.svg'
-hudImg.src = 'hud-outline.svg'
-shovelImg.src = 'shovel.png'
-placeholder.src = 'placeholder.png'
-arrowImg.src = 'arrow.png'
-damagedImg.src = 'damage.png'
+playerImg.src = 'assets/declan.png'
+test.src = 'assets/judeAndMagdalene.jpg'
+blockImg.src = 'assets/blocks.svg'
+bgImage.src = 'assets/backgroundLoop.svg'
+hudImg.src = 'assets/hud-outline.svg'
+shovelImg.src = 'assets/shovel.png'
+placeholder.src = 'assets/placeholder.png'
+arrowImg.src = 'assets/arrow.png'
+// damagedImg.src = 'assets/damage.png'
 
 
 export class playerClass {
@@ -41,6 +43,7 @@ export class playerClass {
         this.isAttacking = false;
         this.attackProgress = 0;
         this.attackSpeed = 0.1;
+        this.attackRange = 100;
     };
     attack() {
         if (!this.isAttacking) {
@@ -140,6 +143,50 @@ export class Obstacle{
     }
     containsPoint(px, py) {
         // if (!this.visible) return false;
+        return (
+            px >= this.x &&
+            px <= this.x + this.width &&
+            py >= this.y &&
+            py <= this.y + this.height
+        );
+    }
+}
+
+export class GhostObstacle{
+    constructor (x, y, width, height, speed, image, color = "#b51212") {
+        this.x = x;
+        this.y = y;
+        this.width = width,
+        this.height = height,
+        // this.size = ;
+        this.speed = speed;
+        this.color = color;
+        this.image = image;
+        this.health = 2;
+    }
+    draw(ctx) {
+        ctx.drawImage(this.image, this.x, this.y, this.width, this.height)
+        if (this.health !== 2) {
+            ctx.drawImage(damagedImg, this.x, this.y, this.width, this.height)
+        }
+    }
+    collidesWith(player) {
+        return(
+            player.x + player.size > this.x &&
+            player.x < this.x + this.width &&
+            player.y + player.size > this.y &&
+            player.y < this.y + this.height
+        );
+    }
+    collidesWithOther(other) {
+        return(
+            other.x + other.width > this.x &&
+            other.x < this.x + this.width &&
+            other.y + other.height > this.y &&
+            other.y < this.y + this.height
+        );
+    }
+    containsPoint(px, py) {
         return (
             px >= this.x &&
             px <= this.x + this.width &&
