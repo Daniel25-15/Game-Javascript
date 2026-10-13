@@ -10,6 +10,8 @@ const placeholder = new Image();
 const arrowImg = new Image();
 const birdImg = new Image();
 const mysteryBox = new Image();
+// const helmetImg = new Image();
+// const bodyImg = new Image();
 // const basicArmor = new Image();
 // const damagedImg = new Image();
 
@@ -26,8 +28,15 @@ placeholder.src = 'assets/placeholder.png'
 arrowImg.src = 'assets/arrow.png'
 birdImg.src = 'assets/bird.png'
 mysteryBox.src = 'assets/mysteryBox.png'
+// helmetImg.src = 'assets/helmet.svg'
+// bodyImg.src = 'assets/body.png'
 // basicArmor.src = "assets/helmet.png"
 // damagedImg.src = 'assets/damage.png'
+
+
+
+let bodyImg = null;
+let helmetImg = null;
 
 
 export class playerClass {
@@ -54,9 +63,15 @@ export class playerClass {
         this.attackRange = 100;
         this.attackCooldown = 0;
         this.attackCooldownTime = 0;
+        this.healTimer = 0;
+        this.healTimeAmount = 650;
 
         this.hasArmor = false;
         this.currentArmor = null;
+        this.bodyImg = bodyImg;
+        this.helmetImg = helmetImg;
+        this.newBodyColorChest = '#58595b';
+        this.newBodyColorArmor = '#231f20'
 
         this.score = 0;
     };
@@ -70,8 +85,8 @@ export class playerClass {
         this.attackCooldown++;
         if (this.isAttacking) {
             this.attackProgress += this.attackSpeed;
-            this.rotationAngle = Math.sin(this.attackProgress * Math.PI) * (Math.PI / 2);
-            
+            this.rotationAngle = Math.sin(this.attackProgress * Math.PI) * (Math.PI / 4.5);
+
             if (this.attackProgress >= 1) {
                 // console.log(`Attack Cooldown: ${ this.attackCooldown }`)
                 this.isAttacking = false;
@@ -85,21 +100,24 @@ export class playerClass {
         if (this.facing === 'left') {
             ctx.translate(this.x + this.size / 2, this.y + this.size / 2);
             ctx.scale(-1, 1);
-            ctx.drawImage(playerImg, -this.size / 2, -this.size / 2, this.size, this.size);
+            ctx.drawImage(playerImg, -this.size / 2, -this.size - this.size / 2, this.size, this.size);
         //     if (this.currentItem) {
         //         ctx.drawImage(this.currentItem, this.size / 2, - 5, 20, 20,)
         //     }
         } else {
-            ctx.drawImage(playerImg, this.x, this.y, this.size, this.size);
+            ctx.drawImage(playerImg, this.x, this.y - this.size, this.size, this.size);
             // if (this.currentItem) {
             //     ctx.drawImage(this.currentItem, this.x + this.size, this.y + this.size / 2 - 5, 20, 20,)
             // }
         }
         ctx.restore()
+        ctx.save();
+        ctx.drawImage(this.bodyImg, this.x, this.y, this.size, this.size);
+        ctx.restore();
         if (this.hasArmor) {
             ctx.save();
-            const armorSizeSpacer = 10
-            ctx.drawImage(this.currentArmor, this.x - (armorSizeSpacer / 2), this.y - (armorSizeSpacer - 3), this.size + armorSizeSpacer, this.size + armorSizeSpacer);
+            const armorSizeSpacer = 4
+            ctx.drawImage(this.helmetImg, this.x - (armorSizeSpacer / 2), this.y - this.size - (armorSizeSpacer - 3), this.size + armorSizeSpacer, this.size + armorSizeSpacer);
             ctx.restore();
         }
         if (this.currentItem) {
@@ -121,7 +139,7 @@ export class playerClass {
             }
             ctx.rotate(this.rotationAngle)
 
-            ctx.drawImage(this.currentItem, -itemW / 2, -itemH / 2, itemW, itemH);
+            ctx.drawImage(this.currentItem, (-itemW / 2) - 5, (-itemH / 2) - 15, itemW, itemH);
             ctx.restore()
         }
         // ctx.fillRect(this.x + 50, this.y, this.size, this.size)

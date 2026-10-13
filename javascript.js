@@ -13,6 +13,16 @@ export const ctx = canvas.getContext("2d", {
   desynchronized: true,
 });
 
+async function changeArmorColor(bodyColor, armorColor, helmetColor) {
+  player.bodyImg = await changeColorOfSVG('assets/body.svg', {
+    [bodyColorChest]: bodyColor,
+    [bodyColorArmor]: armorColor
+  });
+  player.helmetImg = await changeColorOfSVG('assets/helmet.svg', {
+    '#58595b': helmetColor
+  });
+}
+
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const playerImg = new Image();
 const test = new Image();
@@ -70,8 +80,28 @@ mysteryBox.src = 'assets/mysteryBox.png'
 //     currentItem: NaN,
 // };
 
+async function changeColorOfSVG(filePath, colorChange) {
+    const response = await fetch(filePath);
+    let svgText = await response.text();
+
+    for (const [oldColor, newColor] of Object.entries(colorChange)) {
+        svgText = svgText.replaceAll(oldColor, newColor);
+    }
+    const blob = new Blob([svgText], {type: 'image/svg+xml'});
+    const url = URL.createObjectURL(blob);
+
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(img);
+        };
+        img.src = url;
+    });
+}
+
 function fetchItem(chosenItem) {
-  fetch("./items.json")
+  fetch("./JSON files/items.json")
     .then((items) => items.json())
     .then((data) => {
       const currentDataRetrieved = chosenItem;
@@ -90,19 +120,25 @@ function fetchItem(chosenItem) {
 }
 
 function fetchArmor(chosenItem) {
-  fetch("./armor.json")
+  fetch("./JSON files/armor.json")
     .then((items) => items.json())
     .then((data) => {
       const currentDataRetrieved = chosenItem;
       const foundData = data[currentDataRetrieved];
-      // console.log(`Data: ${ foundData }`)
       if (foundData) {
-        // console.log(data)
         player.armorMultiplier = foundData.armorMultiplier;
         player.hasArmor = true;
-        if (foundData.tier === "basic") {
-          player.currentArmor = basicArmor;
-        }
+        player.currentArmor = basicArmor;
+        changeArmorColor(foundData.bodyColor, foundData.armorColor, foundData.helmetColor)
+        
+        // if (foundData.tier === "basic") {
+        //   player.currentArmor = basicArmor;
+        //   changeArmorColor(foundData.bodyColor, foundData.armorColor, foundData.helmetColor)
+        // }
+        // if (foundData.tier === "basic") {
+        //   player.currentArmor = basicArmor;
+        //   changeArmorColor(foundData.bodyColor, foundData.armorColor, foundData.helmetColor)
+        // }
       }
     })
     .catch((error) => console.log(`Error with JSON file: ${error}`));
@@ -162,10 +198,10 @@ export function randomNumber(minimum, maximuum) {
   return Math.floor(Math.random() * (maximuum - minimum + 1)) + minimum;
 }
 
-export const player = new playerClass(350, 50, 30, 10);
+export const player = new playerClass(350, 50, 20, 10);
 fetchItem("hand");
 // player.hasArmor = true;
-fetchArmor("basic")
+fetchArmor("starter")
 
 let cameraX = 0;
 
@@ -383,7 +419,7 @@ class enemyBasic {
 let currentHoverItem = null;
 
 function getDisplayData(currentHoverItem) {
-  fetch("./items.json")
+  fetch("./JSON files/items.json")
     .then((items) => items.json())
     .then((data) => {
       const currentDataRetrieved = currentHoverItem;
@@ -891,7 +927,7 @@ function checkObstaclesClicked(mouseX, mouseY) {
           player.currentItemObject === "shovel" ||
           player.currentItemObject === "ax"
         ) {
-          if (obstacle.health > 0) {
+          if (obstacle.health > 0 && obstacle.image.src !== mysteryBox.src) {
             obstacle.health -= 1;
           }
           if (obstacle.health <= 0) {
@@ -1010,7 +1046,7 @@ export function addObstacle(
   const gridY = Math.floor(obstacleY / gridSize) * gridSize;
 
   if (isOverLaping(gridX, gridY, width, height)) {
-    console.log("Grid slot taken");
+    // console.log("Grid slot taken");
     return false;
   }
   // if (ghost) {
@@ -1021,7 +1057,6 @@ export function addObstacle(
   return true;
 }
 
-addObstacle(50, canvas.height - 50, 50, 50, 4, mysteryBox)
 
 function clearMap() {
   while (obstacles.length > 0) {
@@ -1194,6 +1229,12 @@ function update() {
 
   player.updateAttack();
 
+  player.healTimer++;
+  if (player.healTimer >= player.healTimeAmount && healthAmount < 100 && healthAmount > 0) {
+      healthAmount += 5;
+      player.healTimer = 0;
+  }
+
   for (let item of hudItems) {
     item.update();
   }
@@ -1348,4 +1389,19 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-gameLoop();
+const bodyColorChest = '#58595b'
+const bodyColorArmor = '#6d6e71'
+
+async function initializeGame() {
+  // console.log(`Body Color: ${ player.newBodyColorChest }\nArmor Color: ${ player.newBodyColorArmor }`)
+  player.bodyImg = await changeColorOfSVG('assets/body.svg', {
+    [bodyColorChest]: player.newBodyColorChest,
+    [bodyColorArmor]: player.newBodyColorArmor
+  });
+  player.helmetImg = await changeColorOfSVG('assets/helmet.svg', {
+    '#58595b': "#403d3d"
+  });
+  gameLoop()
+}
+// gameLoop();
+initializeGame()

@@ -1,0 +1,23 @@
+{
+    "starter": {
+        "tier": "starter",
+        "armorMultiplier": 1.25,
+        "bodyColor": "#492003",
+        "armorColor": "#5b2c0a",
+        "helmetColor": "#442006"
+    },
+    "basic": {
+        "tier": "basic",
+        "armorMultiplier": 2,
+        "bodyColor": "#302e2ee2",
+        "armorColor": "#5e5d5d",
+        "helmetColor": "#515356"
+    },
+    "knight": {
+        "tier": "knight",
+        "armorMultiplier": 2.5,
+        "bodyColor": "#2f2929",
+        "armorColor": "#5a4c4c",
+        "helmetColor": "#7d1818"
+    }
+}

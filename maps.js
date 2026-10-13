@@ -5,13 +5,18 @@ const blockImg = new Image();
 const crateImg = new Image();
 const secondEnemyImg = new Image();
 const placeholder = new Image();
+const mysteryBox = new Image();
+const doorWayImg = new Image();
 
-
+// #442006
 
 blockImg.src = 'assets/blocks.svg'
 crateImg.src = 'assets/crate.png'
 secondEnemyImg.src = 'assets/secondEnemy.png'
 placeholder.src = 'assets/placeholder.png'
+mysteryBox.src = 'assets/mysteryBox.png'
+doorWayImg.src = 'assets/doorway.png'
+
 
 
 function buildCratePile(relativePileX) {
@@ -25,9 +30,9 @@ function buildTower(relativeTowerX) {
     // addObstacle(relativeTowerX, canvas.height - 50, 50, 50, 4, blockImg)
     // addObstacle(relativeTowerX + 50, canvas.height - 50, 50, 50, 4, blockImg)
     // addObstacle(relativeTowerX + 100, canvas.height - 50, 50, 50, 4, blockImg)
-    ghostObstacles.push(new GhostObstacle(relativeTowerX, canvas.height - 50, 50, 50, 4, placeholder))
-    ghostObstacles.push(new GhostObstacle(relativeTowerX + 50, canvas.height - 50, 50, 50, 4, placeholder))
-    ghostObstacles.push(new GhostObstacle(relativeTowerX + 100, canvas.height - 50, 50, 50, 4, placeholder))
+    ghostObstacles.push(new GhostObstacle(relativeTowerX, canvas.height - 50, 50, 50, 4, doorWayImg))
+    ghostObstacles.push(new GhostObstacle(relativeTowerX + 50, canvas.height - 50, 50, 50, 4, blockImg))
+    ghostObstacles.push(new GhostObstacle(relativeTowerX + 100, canvas.height - 50, 50, 50, 4, doorWayImg))
     addObstacle(relativeTowerX, canvas.height - 100, 50, 50, 4, blockImg)
     addObstacle(relativeTowerX, canvas.height - 150, 50, 50, 4, blockImg)
     addObstacle(relativeTowerX, canvas.height - 200, 50, 50, 4, blockImg)
@@ -80,4 +85,6 @@ export function buildMapOne() {
     }
     buildTower(1500);
     // buildSmallArena(randomNumber(5000, 7500));
+    addObstacle(50, canvas.height - 50, 50, 50, 4, mysteryBox)
+
 }
