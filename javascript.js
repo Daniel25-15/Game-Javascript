@@ -30,6 +30,8 @@ const potatoImg = new Image();
 const spearImg = new Image();
 const secondEnemyImg = new Image();
 const birdImg = new Image();
+const mysteryBox = new Image();
+export const basicArmor = new Image();
 export const damagedImg = new Image();
 
 const bgParaFactor = 0.5;
@@ -51,6 +53,9 @@ potatoImg.src = "assets/potato.png";
 spearImg.src = "assets/spear.png";
 secondEnemyImg.src = "assets/secondEnemy.png";
 birdImg.src = "assets/bird.png";
+basicArmor.src = "assets/helmet.png"
+mysteryBox.src = 'assets/mysteryBox.png'
+
 
 // let player = {
 //     x: 100,
@@ -84,6 +89,26 @@ function fetchItem(chosenItem) {
     .catch((error) => console.log(`Error with JSON file: ${error}`));
 }
 
+function fetchArmor(chosenItem) {
+  fetch("./armor.json")
+    .then((items) => items.json())
+    .then((data) => {
+      const currentDataRetrieved = chosenItem;
+      const foundData = data[currentDataRetrieved];
+      // console.log(`Data: ${ foundData }`)
+      if (foundData) {
+        // console.log(data)
+        player.armorMultiplier = foundData.armorMultiplier;
+        player.hasArmor = true;
+        if (foundData.tier === "basic") {
+          player.currentArmor = basicArmor;
+        }
+      }
+    })
+    .catch((error) => console.log(`Error with JSON file: ${error}`));
+}
+
+
 let healthAmount = 100;
 
 class hudItem {
@@ -99,6 +124,9 @@ class hudItem {
   update() {
     if (this.text.includes("Health")) {
       this.text = `Health ${healthAmount}`;
+    }
+    if (this.text.includes("Score")) {
+      this.text = `Score: ${ player.score }`;
     }
   }
   draw(ctx) {
@@ -136,6 +164,8 @@ export function randomNumber(minimum, maximuum) {
 
 export const player = new playerClass(350, 50, 30, 10);
 fetchItem("hand");
+// player.hasArmor = true;
+fetchArmor("basic")
 
 let cameraX = 0;
 
@@ -494,6 +524,9 @@ let hudItems = [];
 
 hudItems.push(new hudItem(50, 0, 300, 90, `Health ${healthAmount}`, 48, true));
 
+hudItems.push(new hudItem(500, 0, 200, 90, `Score: ${ player.score }`, 46, true));
+
+
 // const newEnemy = new enemyBasic(100, canvas.height - 50, 50, 50, 100, 0.05)
 
 let keys = {};
@@ -574,11 +607,11 @@ const projectiles = [];
 let allInventorySlots = [];
 
 const startInventoryX = 50;
-const startInventoryY = 100;
+const startInventoryY = 150;
 const inventoryPadding = 10;
 
-const inventorySlotsAmount = 30;
-const itemsPerRow = 10;
+const inventorySlotsAmount = 21;
+const itemsPerRow = 7;
 
 for (let i = 0; i < inventorySlotsAmount; i++) {
   const column = i % itemsPerRow;
@@ -816,61 +849,91 @@ function checkInventorySlotsClicked(mouseX, mouseY) {
 // summonWaves(relativeX + 800)
 
 let lootpool = [potatoImg, blockImg];
+let mysteryBoxLootPool = [potatoImg, blockImg, spearImg, bowImg];
+const requiredScoreForMysteryBox = 950
 
 function checkObstaclesClicked(mouseX, mouseY) {
-  console.log(`Current Item Object: ${player.currentItemObject}`);
-  if (
-    player.currentItemObject === "shovel" ||
-    player.currentItemObject === "ax"
-  ) {
+  // console.log(`Current Item Object: ${player.currentItemObject}`);
+
     for (let i = 0; i < obstacles.length; i++) {
       const obstacle = obstacles[i];
       // console.log(`Obstacle Health: ${ obstacle.health }`)
       if (obstacle.containsPoint(mouseX, mouseY)) {
-        console.log("Block Clicked");
-        if (obstacle.health > 0) {
-          obstacle.health -= 1;
+        // console.log("Block Clicked");
+        if (obstacle.image.src === mysteryBox.src && player.score >= requiredScoreForMysteryBox) {
+          console.log(`Clicked Mystery Box`)
+          const randomLootPoolIndex = Math.floor(
+            Math.random() * mysteryBoxLootPool.length,
+          );
+          const chosenMysteryBoxItem = mysteryBoxLootPool[randomLootPoolIndex];
+
+          // const randomLootPoolIndex = randomNumber(1, 100);
+          // if (randomLootPoolIndex < 15 && randomLootPoolIndex >= 1) {
+          //   chosenMysteryBoxItem = potatoImg;
+          // }
+          // if (randomLootPoolIndex < 35 && randomLootPoolIndex >= 15) {
+          //   chosenMysteryBoxItem = blockImg;
+          // }
+          // if (randomLootPoolIndex < 55 && randomLootPoolIndex >= 35) {
+          //   chosenMysteryBoxItem = spearImg;
+          // }
+          // if (randomLootPoolIndex < 75 && randomLootPoolIndex >= 55) {
+          //   chosenMysteryBoxItem = bowImg;
+          // }
+          // if (randomLootPoolIndex <= 100 && randomLootPoolIndex >= 75) {
+          //   chosenMysteryBoxItem = potatoImg;
+          // }
+          const addedItem = addItemToInventory(chosenMysteryBoxItem);
+          player.score -= requiredScoreForMysteryBox;
+          return false;
         }
-        if (obstacle.health <= 0) {
-          if (
-            obstacle.image.src !== blockImg.src ||
-            obstacle.image.src !== crateImg.src
-          )
-            console.log(`Obstacle Image Exception: ${obstacle.image}`);
-          if (obstacle.image.src === blockImg.src) {
-            const addedItem = addItemToInventory(blockImg);
-            if (addedItem) {
-              obstacles.splice(i, 1);
-              return true;
-            } else {
-              return false;
-            }
+        if (
+          player.currentItemObject === "shovel" ||
+          player.currentItemObject === "ax"
+        ) {
+          if (obstacle.health > 0) {
+            obstacle.health -= 1;
           }
-          if (obstacle.image.src === crateImg.src) {
-            const randomLootPoolIndex = Math.floor(
-              Math.random() * lootpool.length,
-            );
-            const chosenLootPool = lootpool[randomLootPoolIndex];
-            const addedItem = addItemToInventory(chosenLootPool);
-            if (addedItem) {
-              obstacles.splice(i, 1);
-              return true;
-            } else {
-              return false;
-            }
-          } else {
+          if (obstacle.health <= 0) {
             if (
               obstacle.image.src !== blockImg.src ||
               obstacle.image.src !== crateImg.src
             )
               console.log(`Obstacle Image Exception: ${obstacle.image}`);
-            console.log(`Obstacle Image Exception: ${obstacle.image}`);
-            obstacles.splice(i, 1);
+            if (obstacle.image.src === blockImg.src) {
+              const addedItem = addItemToInventory(blockImg);
+              if (addedItem) {
+                obstacles.splice(i, 1);
+                return true;
+              } else {
+                return false;
+              }
+            }
+            if (obstacle.image.src === crateImg.src) {
+              const randomLootPoolIndex = Math.floor(
+                Math.random() * lootpool.length,
+              );
+              const chosenLootPool = lootpool[randomLootPoolIndex];
+              const addedItem = addItemToInventory(chosenLootPool);
+              if (addedItem) {
+                obstacles.splice(i, 1);
+                return true;
+              } else {
+                return false;
+              }
+            } else {
+              if (
+                obstacle.image.src !== blockImg.src ||
+                obstacle.image.src !== crateImg.src
+              )
+                console.log(`Obstacle Image Exception: ${obstacle.image}`);
+              console.log(`Obstacle Image Exception: ${obstacle.image}`);
+              obstacles.splice(i, 1);
+            }
           }
         }
       }
     }
-  }
   return false;
 }
 
@@ -912,6 +975,7 @@ function playerDeath() {
   obstacles = [];
   ghostObstacles = [];
   buildMapOne();
+  player.score = 0;
 }
 
 buildMapOne();
@@ -957,15 +1021,8 @@ export function addObstacle(
   return true;
 }
 
-// obstacles.push(new Obstacle(350, canvas.height - 50, 50, 50, 4, crateImg))
+addObstacle(50, canvas.height - 50, 50, 50, 4, mysteryBox)
 
-// function buildMap(mapNumber) {
-//     if (mapNumber === 'mapDefault') {
-//         // console.log('imported file')
-//         addObstacle(150, canvas.height - 50, 50, 75, 4)
-//     }
-// }
-// buildMap('mapDefault')
 function clearMap() {
   while (obstacles.length > 0) {
     obstacles.pop();
@@ -987,9 +1044,7 @@ window.addEventListener("click", (event) => {
   const mouseY = event.clientY - rect.top;
   if (checkInventorySlotsClicked(mouseX, mouseY)) return;
   if (checkObstaclesClicked(mouseX, mouseY)) return;
-  console.log(
-    `Item: ${player.currentItem}\nCooldown: ${player.attackCooldownTime}`,
-  );
+  // console.log(`Item: ${player.currentItem}\nCooldown: ${player.attackCooldownTime}`,);
   if (player.attackCooldown < player.attackCooldownTime) {
     return;
   } else {
@@ -1110,6 +1165,12 @@ function update() {
       enemy.isOnGround = true;
     }
   }
+
+  const deadEnemy = enemies.filter((enemy) => enemy.health <= 0);
+  deadEnemy.forEach((enemy) => {
+    player.score += 100
+    console.log(player.score)
+  });
 
   enemies = enemies.filter((enemy) => enemy.health > 0);
 

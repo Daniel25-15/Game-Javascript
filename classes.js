@@ -1,4 +1,4 @@
-import { damagedImg, player, dealDamageToPlayer, randomNumber, canvas } from "./javascript.js"; 
+import { damagedImg, player, dealDamageToPlayer, randomNumber, canvas, basicArmor } from "./javascript.js"; 
 
 const playerImg = new Image();
 const test = new Image();
@@ -9,6 +9,8 @@ const shovelImg = new Image();
 const placeholder = new Image();
 const arrowImg = new Image();
 const birdImg = new Image();
+const mysteryBox = new Image();
+// const basicArmor = new Image();
 // const damagedImg = new Image();
 
 
@@ -23,6 +25,8 @@ shovelImg.src = 'assets/shovel.png'
 placeholder.src = 'assets/placeholder.png'
 arrowImg.src = 'assets/arrow.png'
 birdImg.src = 'assets/bird.png'
+mysteryBox.src = 'assets/mysteryBox.png'
+// basicArmor.src = "assets/helmet.png"
 // damagedImg.src = 'assets/damage.png'
 
 
@@ -50,6 +54,11 @@ export class playerClass {
         this.attackRange = 100;
         this.attackCooldown = 0;
         this.attackCooldownTime = 0;
+
+        this.hasArmor = false;
+        this.currentArmor = null;
+
+        this.score = 0;
     };
     attack() {
         if (!this.isAttacking) {
@@ -87,6 +96,12 @@ export class playerClass {
             // }
         }
         ctx.restore()
+        if (this.hasArmor) {
+            ctx.save();
+            const armorSizeSpacer = 10
+            ctx.drawImage(this.currentArmor, this.x - (armorSizeSpacer / 2), this.y - (armorSizeSpacer - 3), this.size + armorSizeSpacer, this.size + armorSizeSpacer);
+            ctx.restore();
+        }
         if (this.currentItem) {
             ctx.save();
             const itemW = 20;
