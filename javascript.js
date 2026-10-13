@@ -1,5 +1,5 @@
 import { buildMapOne, } from './maps.js';
-import { playerClass, Obstacle, inventorySlot, GhostObstacle, } from './classes.js';
+import { playerClass, Obstacle, inventorySlot, GhostObstacle, flyingEnemy, } from './classes.js';
 
 
 export const canvas = document.getElementById('game');
@@ -21,6 +21,7 @@ const bowImg = new Image();
 const potatoImg = new Image();
 const spearImg = new Image();
 const secondEnemyImg = new Image();
+const birdImg = new Image();
 export const damagedImg = new Image();
 
 const bgParaFactor = 0.5;
@@ -41,6 +42,8 @@ bowImg.src = 'assets/bow.png'
 potatoImg.src = 'assets/potato.png'
 spearImg.src = 'assets/spear.png'
 secondEnemyImg.src = 'assets/secondEnemy.png'
+birdImg.src = 'assets/bird.png'
+
 
 // let player = {
 //     x: 100,
@@ -55,25 +58,66 @@ secondEnemyImg.src = 'assets/secondEnemy.png'
 //     currentItem: NaN,
 // };
 
+function fetchItem(chosenItem) {
+    fetch('./items.json')
+        .then(items => items.json())
+        .then(data => {
+            const currentDataRetrieved = chosenItem;
+            const foundData = data[currentDataRetrieved];
+            if (foundData) {
+                // console.log(data)
+                // player.currentItem = foundData.item;
+                player.currentItemObject = foundData.name;
+                player.damageMultiplier = foundData.damage;
+                player.currentDescription = foundData.description;
+                player.attackRange = foundData.range;
+                player.attackCooldownTime = foundData.cooldown;
+            }
+        })
+        .catch(error => console.log(`Error with JSON file: ${ error }`))
+}
+
+
 
 let healthAmount = 100;
 
 class hudItem {
-    constructor(x, y, width, height) {
+    constructor(x, y, width, height, text, size, visible) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
+        this.text = text;
+        this.size = size;
+        this.visible = visible;
     };
+    update() {
+        if (this.text.includes('Health')) {
+            this.text = `Health ${ healthAmount }`
+        }
+    }
     draw(ctx) {
-        ctx.drawImage(hudImg, this.x, this.y, this.width, this.height);
-        ctx.font = '48px sans-serif';
-        ctx.fillStyle = 'white';
-        ctx.fillText(`Health ${ healthAmount }`, this.x + 20, this.y + 60);
+        if (this.visible) {
+            ctx.drawImage(hudImg, this.x, this.y, this.width, this.height);
+            ctx.font = `${this.size}px sans-serif`;
+            ctx.fillStyle = 'white';
+            const lines = this.text.split('\n');
+            let startY = this.text.includes('item') ? this.y - 20 : 60;
+            const lineHeight = this.size 
+            lines.forEach((line, index ) => {
+                ctx.fillText(line, this.x + 20, startY + (-1 * (index * lineHeight - 10)));
+            });
+            // if (this.text.includes('Item')) {
+            //     ctx.fillText(this.text, this.x + 20, this.y + 20);
+            // } else {
+            //     ctx.fillText(this.text, this.x + 20, this.y + 60);
+            // }
+        }
     }
 }
 
-function dealDamageToPlayer(damageAmount) {
+export function dealDamageToPlayer(damageAmount) {
+    // console.log(`Damaged Player, Player Health: ${ healthAmount }`)
     healthAmount -= damageAmount / player.armorMultiplier;
 }
 
@@ -81,7 +125,8 @@ export function randomNumber(minimum, maximuum) {
     return Math.floor(Math.random() * (maximuum - minimum + 1)) + minimum;
 }
 
-const player = new playerClass(350, 180, 30, 10)
+export const player = new playerClass(350, 50, 30, 10)
+fetchItem('hand');
 
 let cameraX = 0;
 
@@ -167,6 +212,9 @@ class enemyBasic {
         if (this.secondCooldown > 0) {
             this.secondCooldown--;
         }
+
+        this.jumpTimerIntervals = randomNumber(30, 450) 
+
         if (this.image.src === enemyImg.src) {
             if (this.timer >= this.intervals) {
                 this.targetX = player.x + (player.size / 2) - (this.width / 2);
@@ -184,8 +232,6 @@ class enemyBasic {
                     this.jumpTimer = 0;
                 }
             }
-
-
 
             if (isOverLaping(this.x, this.y, 50, 50)) {
                 console.log('stuck')
@@ -250,6 +296,10 @@ class enemyBasic {
                 }
             }
         }
+        // if (this.image.src === placeholder.src) {
+        //     // console.log(`Current Enemy Type: ${ this.image.src }`)
+            
+        // }
     };
 
     draw(ctx) {
@@ -295,12 +345,83 @@ class enemyBasic {
 
 // █
 
+let currentHoverItem = null
+
+function getDisplayData(currentHoverItem) {
+    fetch('./items.json')
+        .then(items => items.json())
+        .then(data => {
+            const currentDataRetrieved = currentHoverItem;
+            const foundData = data[currentDataRetrieved];
+            if (foundData) {
+                const displayDamage = foundData.damage * 10;
+                player.currentDescription = foundData.description;
+                const displayRange = foundData.range;
+                const text = `Description: ${ player.currentDescription }\nRange: ${ displayRange }\nDamage: ${ displayDamage }\nItem: ${ currentHoverItem }`
+                hudItems.push(new hudItem(100, 0, 500, 120, text, 14, true));
+            }
+        })
+        .catch(error => console.log(`Error with JSON file: ${ error }`))
+
+}
+
 window.addEventListener('mousemove', (event) => {
     const rect = canvas.getBoundingClientRect();
     currentMouseX = event.clientX - rect.left;
     currentMouseY = event.clientY - rect.top;
+    for (let slot of allInventorySlots) {
+        const slotX = slot.x + slot.width;
+        const slotY = slot.y + slot.height;
+        if (currentMouseX > slot.x &&
+            currentMouseX < slot.x + slot.width &&
+            currentMouseY > slot.y &&
+            currentMouseY < slot.y + slot.height &&
+            slot.visible
+        ) {
+            // console.log('Hovering over slot')
+            if (slot.item === shovelImg) {
+                let currentHoverItem = 'shovel';
+                getDisplayData(currentHoverItem)
+            } else if (slot.item === bowImg) {
+                let currentHoverItem = 'bow';
+                getDisplayData(currentHoverItem)
+            } else if (slot.item === axImg) {
+                let currentHoverItem = 'ax';
+                getDisplayData(currentHoverItem)
+            } else if (slot.item === blockImg) {
+                let currentHoverItem = 'block';
+                getDisplayData(currentHoverItem)
+            } else if (slot.item === bowImg) {
+                let currentHoverItem = 'bow';
+                getDisplayData(currentHoverItem)
+            } else if (slot.item === bowImg) {
+                let currentHoverItem = 'bow';
+                getDisplayData(currentHoverItem)
+            }
+            if (slot.item === potatoImg) {
+                let currentHoverItem = 'potato'
+                getDisplayData(currentHoverItem)
+            }
+            if (!slot.item) {
+                for (let item of hudItems) {
+                    if (item.text.includes('Item')) {
+                        item.visible = false;
+                    }
+                }
+            } 
+            // else {
+            //     for (let item of hudItems) {
+            //         if (item.text.includes('Item')) {
+            //             item.visible = false;
+            //         }
+            //     }
+            // }
+
+        }
+    }
 
 })
+
 
 function drawProjectile(ctx, img, x, y, width, height, angle) {
     const projectileDX = currentMouseX - x;
@@ -360,7 +481,9 @@ class projectile {
     };  
 }
 
-const playerHealth = new hudItem(50, 0, 300, 90)
+let hudItems = []
+
+hudItems.push(new hudItem(50, 0, 300, 90, `Health ${ healthAmount }`, 48, true))
 
 // const newEnemy = new enemyBasic(100, canvas.height - 50, 50, 50, 100, 0.05)
 
@@ -381,13 +504,18 @@ let enemies = [
 export function spawnEnemy(x, width, height, health, speed, image, y) {
     if (image === enemyImg) {
         enemies.push(new enemyBasic(x, canvas.height - (100 + height), width, height, health, speed, image))
-    } else {
-        if (image.src === secondEnemyImg.src) {
-            console.log('Spawned Second enemy')
-            enemies.push(new enemyBasic(x, canvas.height - y, width, height, health, speed, image))
-        }
-    } 
+    } else if (image.src === secondEnemyImg.src) {
+        console.log('Spawned Second enemy')
+        enemies.push(new enemyBasic(x, canvas.height - y, width, height, health, speed, image))
+    }  else if (image.src === placeholder.src) {
+        console.log('Spawned Third enemy')
+        enemies.push(new enemyBasic(x, canvas.height - y, width, height, health, speed, image))
+    }
 }
+
+let flyingEnemies = []
+
+// flyingEnemies.push(new flyingEnemy(50, 150, 50, 50, 4, birdImg))
 
 let numberOfEnemies = 3
 let enemyHealth = 100
@@ -405,6 +533,8 @@ function summonWaves(x) {
     }
     
 }
+
+// spawnEnemy(150, 50, 50, enemyHealth, 5, placeholder, canvas.height - 150);
 
 
 // spawnEnemy(200, 100, 100, 350, 5, secondEnemyImg);
@@ -495,6 +625,9 @@ function moveRight() {
     for (let ghost of ghostObstacles) {
         ghost.x -= moveAmount
     }
+    for (let enemy of flyingEnemies) {
+        enemy.x -= moveAmount
+    }
     if (checkCollisionsFirst()) {
         for (let obstacle of obstacles) {
             obstacle.x += moveAmount;
@@ -504,6 +637,9 @@ function moveRight() {
         }
         for (let ghost of ghostObstacles) {
             ghost.x += moveAmount
+        }
+        for (let enemy of flyingEnemies) {
+            enemy.x += moveAmount
         }
         cameraX -= moveAmount
     }
@@ -525,6 +661,9 @@ function moveLeft() {
     for (let ghost of ghostObstacles) {
         ghost.x += moveAmount
     }
+    for (let enemy of flyingEnemies) {
+        enemy.x += moveAmount
+    }
     if (checkCollisionsFirst()) {
         for (let obstacle of obstacles) { 
             obstacle.x -= moveAmount;
@@ -532,9 +671,12 @@ function moveLeft() {
         for (let ghost of ghostObstacles) {
             ghost.x -= moveAmount
         }
-    for (let enemy of enemies) {
-        enemy.x -= moveAmount
-    }
+        for (let enemy of flyingEnemies) {
+            enemy.x -= moveAmount
+        }
+        for (let enemy of enemies) {
+            enemy.x -= moveAmount
+        }
         cameraX += moveAmount;
     }
 }
@@ -595,16 +737,18 @@ function checkInventorySlotsClicked(mouseX, mouseY) {
                     return true;
                 }
                 if (slot.item === shovelImg) {
-                    console.log('shovel')
+                    // console.log('shovel')
                     player.currentItem = shovelImg;
-                    player.damageMultiplier = 1.5;
-                    player.attackRange = 100;
+                    fetchItem("shovel");
+                    // player.damageMultiplier = 1.5;
+                    // player.attackRange = 100;
                     return true;
                 } 
                 if (slot.item === axImg) {
                     player.currentItem = axImg;
-                    player.damageMultiplier = 1.75;
-                    player.attackRange = 85;
+                    // player.damageMultiplier = 1.75;
+                    // player.attackRange = 85;
+                    fetchItem("ax");
                     return true;
                 } 
                 if (slot.item === potatoImg) {
@@ -619,19 +763,23 @@ function checkInventorySlotsClicked(mouseX, mouseY) {
                 }
                 if (slot.item === bowImg) {
                     player.currentItem = bowImg;
+                    fetchItem("bow");
                     return true;
                 }
                 if (slot.item === spearImg) {
                     player.currentItem = spearImg;
-                    player.damageMultiplier = 2;
-                    player.attackRange = 150;
+                    // player.damageMultiplier = 2;
+                    // player.attackRange = 150;
+                    fetchItem("spear");
                     return true;
                 }
+                fetchItem('hand');
                 slot.item = false
                 return true;
                 
             }
             // slot.item = playerImg;
+            fetchItem('hand');
             player.currentItem = null;
             return true;
         }
@@ -639,13 +787,14 @@ function checkInventorySlotsClicked(mouseX, mouseY) {
     return false;
 }
 
-summonWaves(relativeX + 800)
+// summonWaves(relativeX + 800)
 
 
 let lootpool = [potatoImg, blockImg]
 
 function checkObstaclesClicked(mouseX, mouseY) {
-    if (player.currentItem === shovelImg || player.currentItem === axImg) {
+    console.log(`Current Item Object: ${ player.currentItemObject }`)
+    if (player.currentItemObject === 'shovel' || player.currentItemObject === 'ax') {
         for (let i = 0; i < obstacles.length; i++) {
             const obstacle = obstacles[i]
             // console.log(`Obstacle Health: ${ obstacle.health }`)
@@ -719,6 +868,7 @@ function playerDeath() {
     numberOfEnemies = 3;
     player.currentItem = false;
     obstacles = []
+    ghostObstacles = []
     buildMapOne()
 }
 
@@ -781,6 +931,7 @@ window.addEventListener('keydown', e => {
     }
 });
 
+let lastAttackTime = 0;
 
 window.addEventListener('click', (event) => {
     const rect = canvas.getBoundingClientRect();
@@ -788,18 +939,26 @@ window.addEventListener('click', (event) => {
     const mouseY = event.clientY - rect.top;
     if (checkInventorySlotsClicked(mouseX, mouseY)) return;
     if (checkObstaclesClicked(mouseX, mouseY)) return;
-    if (player.currentItem === bowImg) {
-        projectiles.push(new projectile(player.x + player.size, player.y + player.size - 5, mouseX, mouseY, arrowImg,8));
-    } else if (player.currentItem === blockImg) {
-        buildObstacleAtPlayer();
-        player.currentItem = false;
-    } else if (player.currentItem === potatoImg) {
-
+    console.log(`Item: ${ player.currentItem }\nCooldown: ${ player.attackCooldownTime }`)
+    if (player.attackCooldown < player.attackCooldownTime) { 
+        return;
     } else {
-        // console.log(`Attack Range: ${ player.attackRange }`)
-        attackFromPlayer(10, player.attackRange)
-        player.attack()
-    }
+        if (player.currentItemObject === "bow") {
+            fetchItem('bow')
+            projectiles.push(new projectile(player.x + player.size, player.y + player.size - 5, mouseX, mouseY, arrowImg,8));
+        } else if (player.currentItem === blockImg) {
+            buildObstacleAtPlayer();
+            player.currentItem = false;
+        } else if (player.currentItem === potatoImg) {
+
+        } else {
+            // console.log(`Attack Range: ${ player.attackRange }`)
+                player.attackCooldown = 0
+                attackFromPlayer(10, player.attackRange)
+                player.attack()
+            } 
+
+        }
 })
 
 window.addEventListener('keydown', (event) => {
@@ -813,24 +972,30 @@ window.addEventListener('keydown', (event) => {
         const slot = allInventorySlots[0];
         if (slot && slot.item) {
             player.currentItem = slot.item;
+            fetchItem('shovel')
         } else {
             player.currentItem = false;
+            fetchItem('hand');
         }
     }
     if (event.key === '2') {
         const slot = allInventorySlots[1];
         if (slot && slot.item) {
             player.currentItem = slot.item;
+            fetchItem('ax')
         } else {
             player.currentItem = false;
+            fetchItem('hand');
         }
     }
     if (event.key === '3') {
         const slot = allInventorySlots[2];
         if (slot && slot.item) {
             player.currentItem = slot.item;
+            fetchItem('bow')
         } else {
             player.currentItem = false;
+            fetchItem('hand');
         }
     }
     if (event.key === '4') {
@@ -839,6 +1004,7 @@ window.addEventListener('keydown', (event) => {
             player.currentItem = slot.item;
         } else {
             player.currentItem = false;
+            fetchItem('hand');
         }
     }
 })
@@ -891,6 +1057,35 @@ function update() {
         }
     }
 
+    // for (let enemy of flyingEnemies) {
+    //     if (!enemy.isAttacking) {
+    //         enemy.isAtMinimum = false;
+            
+    //         const skyLevelEnemy = canvas.height - 200;
+    //         enemy.velocityY += enemy.gravity;
+    //         enemy.y += enemy.velocityY;
+
+    //         if (enemy.y > skyLevelEnemy) {
+    //             enemy.y = skyLevelEnemy;
+    //             enemy.velocityY = 0;
+    //             enemy.isAtMinimum = true;
+    //         }
+    //     }
+        
+    //     enemy.isOnGround = false;
+        
+    //     const groundLevelEnemy = canvas.height - (enemy.height + 7);
+    //     enemy.velocityY += enemy.gravity;
+    //     enemy.y += enemy.velocityY;
+
+    //     if (enemy.y > groundLevelEnemy) {
+    //         enemy.y = groundLevelEnemy;
+    //         enemy.velocityY = 0;
+    //         enemy.isOnGround = true;
+    //     }
+    // }
+
+
     enemies = enemies.filter(enemy => enemy.health > 0);
 
     if (healthAmount > 100) {
@@ -912,6 +1107,14 @@ function update() {
     }
 
     player.updateAttack()
+
+    for (let item of hudItems) {
+        item.update()
+    }
+
+    for (let enemy of flyingEnemies) {
+        enemy.update()
+    }
 
     for (let i = projectiles.length - 1; i >= 0; i--) {
         const p = projectiles[i];
@@ -1011,13 +1214,18 @@ function draw() {
 
     obstacles.forEach(obstacle => obstacle.draw(ctx));
 
-
+    for (let enemy of flyingEnemies) {
+        enemy.draw(ctx)
+    }
 
     // ghostObstacles.forEach(ghost => ghost.draw(ctx));
 
     allInventorySlots.forEach(inventorySlot => inventorySlot.draw(ctx))
 
-    playerHealth.draw(ctx)
+    // playerHealth.draw(ctx)
+    for (let item of hudItems) {
+        item.draw(ctx)
+    }
 
     for (let i = projectiles.length - 1; i >= 0; i--) {
         const p = projectiles[i];

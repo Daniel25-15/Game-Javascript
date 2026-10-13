@@ -1,0 +1,51 @@
+{
+    "shovel": {
+        "name": "shovel",
+        "damage": 1.5,
+        "description": "Medium damage and range. Can break obstacles.",
+        "range": 100,
+        "cooldown": 30
+    },
+    "ax": {
+        "name": "ax",
+        "damage": 1.75,
+        "description": "Medium damage but bad range. Can break obstacles.",
+        "range": 75,
+        "cooldown": 40
+    },
+    "bow": {
+        "name": "bow",
+        "damage": 1,
+        "description": "Bad damage, but fast and has good range.",
+        "range": 250,
+        "cooldown": 25
+    },
+    "spear": {
+        "name": "spear",
+        "damage": 2,
+        "description": "Strong damage and good range.",
+        "range": 150,
+        "cooldown": 55
+    },
+    "block": {
+        "name": "obstacleBrick",
+        "damage": 0,
+        "description": "An obstacle that can be placed down when needed.",
+        "range": 0,
+        "cooldown": 1
+    },
+    "hand": {
+        "name": "hand",
+        "damage": 1,
+        "description": "Bad damage, and bad range.",
+        "range": 50,
+        "cooldown": 1
+    },
+    "potato": {
+        "name": "potato",
+        "damage": 0,
+        "description": "A food that never completely fulfills you, but will heal you.",
+        "range": 100,
+        "cooldown": 1
+    }
+}

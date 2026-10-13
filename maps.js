@@ -79,5 +79,5 @@ export function buildMapOne() {
         buildCratePile(randomNumber(600, 1000));
     }
     buildTower(1500);
-    buildSmallArena(randomNumber(5000, 7500));
+    // buildSmallArena(randomNumber(5000, 7500));
 }
