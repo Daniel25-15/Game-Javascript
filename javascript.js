@@ -634,9 +634,9 @@ function jump() {
   }
 }
 
-function moveRight(deltaTime) {
+function moveRight() {
   player.facing = "right";
-  const moveAmount = player.speed * deltaTime;
+  const moveAmount = player.speed;
 
   cameraX += moveAmount;
   relativeX += moveAmount;
@@ -670,9 +670,9 @@ function moveRight(deltaTime) {
     cameraX -= moveAmount;
   }
 }
-function moveLeft(deltaTime) {
+function moveLeft() {
   player.facing = "left";
-  const moveAmount = player.speed * deltaTime;
+  const moveAmount = player.speed;
 
   cameraX -= moveAmount;
   relativeX -= moveAmount;
@@ -1083,9 +1083,9 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
-function update(deltaTime) {
-  if (keys["ArrowRight"] || keys["d"]) moveRight(deltaTime);
-  if (keys["ArrowLeft"] || keys["a"]) moveLeft(deltaTime);
+function update() {
+  if (keys["ArrowRight"] || keys["d"]) moveRight();
+  if (keys["ArrowLeft"] || keys["a"]) moveLeft();
   if (keys["ArrowUp"] || keys["w"]) jump();
 
   player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
@@ -1280,16 +1280,8 @@ function draw() {
   player.draw(ctx);
 }
 
-let lastTime = 0;
-const gameSpeed = 300;
-let x = 100;
-
-function gameLoop(time) {
-  if (!time) lastTime = time;
-  const deltaTime = (time - lastTime) / 1000;
-  lastTime = time;
-  const safeDelta = Math.min(deltaTime, 0.1);
-  update(safeDelta);
+function gameLoop() {
+  update();
   draw();
 
   requestAnimationFrame(gameLoop);
