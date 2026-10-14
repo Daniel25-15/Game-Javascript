@@ -479,13 +479,45 @@ function getDisplayData(currentHoverItem) {
     .catch((error) => console.log(`Error with JSON file: ${error}`));
 }
 
+let touchStartX = 0;
+let movingLeft = false;
+let movingRight = false;
+
+window.addEventListener('touchstart', (event) => {
+  event.preventDefault();
+  touchStartX = event.touches[0].clientX;
+}, { passive: false });
+
 window.addEventListener('touchmove', (event) => {
   event.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const touchX = event.touches[0].clientX - rect.left;
-  const touchY = event.touches[0].clientY - rect.top;
-  console.log(`Mobile X: ${ touchX }\nMobile Y: ${ touchY }`)
-});
+  // const rect = canvas.getBoundingClientRect();
+  // const touchX = event.touches[0].clientX - rect.left;
+  // const touchY = event.touches[0].clientY - rect.top;
+  const currentTouchX = event.touches[0].clientX;
+  const differenceTouchX =  currentTouchX - touchStartX;
+  const thresholdTouch = 10;
+
+  if (differenceTouchX < -thresholdTouch) {
+    movingLeft = true;
+    movingRight = false;
+  } else if (differenceTouchX > thresholdTouch) {
+    movingLeft = false;
+    movingRight = true;
+  } else {
+    movingLeft = false;
+    movingRight = false;
+  }
+  
+}, {passive: false });
+
+window.addEventListener('touchend', (event) => {
+  event.preventDefault();
+  movingLeft = false;
+  movingRight = false;
+}, {passive: false });
+
+// console.log(`Mobile X: ${ touchX }\nMobile Y: ${ touchY }`)
+
 
 window.addEventListener("mousemove", (event) => {
   const rect = canvas.getBoundingClientRect();
@@ -1280,9 +1312,10 @@ window.addEventListener("keydown", (e) => {
 });
 
 function update() {
-  if (keys["ArrowRight"] || keys["d"]) moveRight();
-  if (keys["ArrowLeft"] || keys["a"]) moveLeft();
+  if (keys["ArrowRight"] || keys["d"] || movingRight) moveRight();
+  if (keys["ArrowLeft"] || keys["a"] || movingLeft) moveLeft();
   if (keys["ArrowUp"] || keys["w"]) jump();
+
 
   player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
 
