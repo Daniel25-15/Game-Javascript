@@ -19,5 +19,12 @@
         "bodyColor": "#2f2929",
         "armorColor": "#5a4c4c",
         "helmetColor": "#7d1818"
+    },
+    "advanced": {
+        "tier": "advanced",
+        "armorMultiplier": 4,
+        "bodyColor": "#111111",
+        "armorColor": "#4e079a8c",
+        "helmetColor": "#813a07"
     }
 }

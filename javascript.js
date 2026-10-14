@@ -23,6 +23,17 @@ async function changeArmorColor(bodyColor, armorColor, helmetColor) {
   });
 }
 
+const startGameButton = document.getElementById('start-game-button');
+
+startGameButton.addEventListener('click', () => {
+  startMenuEnabled = false;
+  gameEnabled = true;
+  startGameButton.style.display = 'none';
+});
+
+// document.body.appendChild(startGameButton);
+
+
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const playerImg = new Image();
 const test = new Image();
@@ -41,6 +52,7 @@ const spearImg = new Image();
 const secondEnemyImg = new Image();
 const birdImg = new Image();
 const mysteryBox = new Image();
+const sickleImg = new Image();
 export const basicArmor = new Image();
 export const damagedImg = new Image();
 
@@ -65,6 +77,7 @@ secondEnemyImg.src = "assets/secondEnemy.png";
 birdImg.src = "assets/bird.png";
 basicArmor.src = "assets/helmet.png"
 mysteryBox.src = 'assets/mysteryBox.png'
+sickleImg.src = 'assets/sickle.svg'
 
 
 // let player = {
@@ -146,6 +159,7 @@ function fetchArmor(chosenItem) {
 
 
 let healthAmount = 100;
+let cameraX = 0;
 
 class hudItem {
   constructor(x, y, width, height, text, size, visible) {
@@ -177,7 +191,7 @@ class hudItem {
         ctx.fillText(
           line,
           this.x + 20,
-          startY + -1 * (index * lineHeight - 10),
+          startY + - 1 * (index * lineHeight - this.y),
         );
       });
       // if (this.text.includes('Item')) {
@@ -189,6 +203,24 @@ class hudItem {
   }
 }
 
+class background {
+    constructor (image) {
+        this.width = canvas.width * 1.5;
+        this.height = canvas.height * 1;
+        this.image = image;
+    }
+
+    draw(ctx) {
+        if (!this.image.complete) return;
+        let offsetX = (((cameraX * bgParaFactor) % this.width) + this.width) % this.width;
+        if (offsetX < 0) offsetX += this.width;
+        ctx.drawImage(this.image, -offsetX, 0, this.width, this.height);
+        ctx.drawImage(this.image, -offsetX + this.width, 0, this.width, this.height);
+
+        ctx.drawImage(this.image, -offsetX - this.width, 0, this.width, this.height); 
+    }
+}
+
 export function dealDamageToPlayer(damageAmount) {
   // console.log(`Damaged Player, Player Health: ${ healthAmount }`)
   healthAmount -= damageAmount / player.armorMultiplier;
@@ -197,33 +229,45 @@ export function dealDamageToPlayer(damageAmount) {
 export function randomNumber(minimum, maximuum) {
   return Math.floor(Math.random() * (maximuum - minimum + 1)) + minimum;
 }
-
 export const player = new playerClass(350, 50, 20, 10);
+
+
 fetchItem("hand");
 // player.hasArmor = true;
-fetchArmor("starter")
+fetchArmor("advanced")
+// #813a07
 
-let cameraX = 0;
 
-function drawBackground() {
-  if (!bgImage.complete) return;
+// function drawBackground() {
+//   if (!bgImage.complete) return;
 
-  const bgWidth = canvas.width * 1.5;
-  const bgHeight = canvas.height * 1;
+//   const bgWidth = canvas.width * 1.5;
+//   const bgHeight = canvas.height * 1;
 
-  let offsetX = (((cameraX * bgParaFactor) % bgWidth) + bgWidth) % bgWidth;
+//   let offsetX = (((cameraX * bgParaFactor) % bgWidth) + bgWidth) % bgWidth;
 
-  if (offsetX < 0) {
-    offsetX += bgWidth;
+//   if (offsetX < 0) {
+//     offsetX += bgWidth;
+//   }
+
+//   // console.log('Player X:', player.x, 'Offset X:', offsetX);
+
+//   ctx.drawImage(bgImage, -offsetX, 0, bgWidth, bgHeight);
+//   ctx.drawImage(bgImage, -offsetX + bgWidth, 0, bgWidth, bgHeight);
+
+//   ctx.drawImage(bgImage, -offsetX - bgWidth, 0, bgWidth, bgHeight);
+// }
+
+const backgroundForest = new background(bgImage)
+
+let startMenuEnabled = true;
+let gameEnabled = false;
+
+function moveBackground() {
+  if (startMenuEnabled) {
+    cameraX += 5
   }
-
-  // console.log('Player X:', player.x, 'Offset X:', offsetX);
-
-  ctx.drawImage(bgImage, -offsetX, 0, bgWidth, bgHeight);
-  ctx.drawImage(bgImage, -offsetX + bgWidth, 0, bgWidth, bgHeight);
-
-  ctx.drawImage(bgImage, -offsetX - bgWidth, 0, bgWidth, bgHeight);
-}
+} 
 
 // function checkCollisionsEnemyFirst() {
 //     return enemies.some(enemy =>
@@ -429,11 +473,19 @@ function getDisplayData(currentHoverItem) {
         player.currentDescription = foundData.description;
         const displayRange = foundData.range;
         const text = `Description: ${player.currentDescription}\nRange: ${displayRange}\nDamage: ${displayDamage}\nItem: ${currentHoverItem}`;
-        hudItems.push(new hudItem(100, 0, 500, 120, text, 14, true));
+        hudItems.push(new hudItem(425, 175, 350, 120, text, 10, true));
       }
     })
     .catch((error) => console.log(`Error with JSON file: ${error}`));
 }
+
+window.addEventListener('touchmove', (event) => {
+  event.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const touchX = event.touches[0].clientX - rect.left;
+  const touchY = event.touches[0].clientY - rect.top;
+  console.log(`Mobile X: ${ touchX }\nMobile Y: ${ touchY }`)
+});
 
 window.addEventListener("mousemove", (event) => {
   const rect = canvas.getBoundingClientRect();
@@ -473,12 +525,23 @@ window.addEventListener("mousemove", (event) => {
         let currentHoverItem = "potato";
         getDisplayData(currentHoverItem);
       }
+      if (slot.item === sickleImg) {
+        let currentHoverItem = "sickle";
+        getDisplayData(currentHoverItem);
+      }
+      if (slot.item === spearImg) {
+        let currentHoverItem = "spear";
+        getDisplayData(currentHoverItem);
+      }
       if (!slot.item) {
         for (let item of hudItems) {
           if (item.text.includes("Item")) {
             item.visible = false;
           }
         }
+      }
+      if (!slot.visible) {
+        console.log(`Not Visible`)
       }
       // else {
       //     for (let item of hudItems) {
@@ -560,7 +623,7 @@ let hudItems = [];
 
 hudItems.push(new hudItem(50, 0, 300, 90, `Health ${healthAmount}`, 48, true));
 
-hudItems.push(new hudItem(500, 0, 200, 90, `Score: ${ player.score }`, 46, true));
+hudItems.push(new hudItem(500, 0, 300, 90, `Score: ${ player.score }`, 46, true));
 
 
 // const newEnemy = new enemyBasic(100, canvas.height - 50, 50, 50, 100, 0.05)
@@ -612,6 +675,7 @@ let flyingEnemies = [];
 let numberOfEnemies = 3;
 let enemyHealth = 100;
 let currentWave = 0;
+let scoreIncrementAmount = 100
 
 function summonWaves(x) {
   currentWave++;
@@ -619,7 +683,8 @@ function summonWaves(x) {
   if (currentWave % 5 === 0) {
     enemyHealth += 25;
   }
-  if (currentWave === 5) addItemToInventory(spearImg);
+  // if (currentWave === 5) scoreIncrementAmount = 150;
+  if (currentWave >= 5 && currentWave % 5 === 0) scoreIncrementAmount += 50;
   for (let ee = 0; ee < numberOfEnemies; ee++) {
     spawnEnemy(
       x + ee * 100,
@@ -641,13 +706,14 @@ function summonWaves(x) {
 const projectiles = [];
 
 let allInventorySlots = [];
+let allEquipedSlots = [];
 
 const startInventoryX = 50;
 const startInventoryY = 150;
 const inventoryPadding = 10;
 
-const inventorySlotsAmount = 21;
-const itemsPerRow = 7;
+const inventorySlotsAmount = 18;
+const itemsPerRow = 6;
 
 for (let i = 0; i < inventorySlotsAmount; i++) {
   const column = i % itemsPerRow;
@@ -657,6 +723,14 @@ for (let i = 0; i < inventorySlotsAmount; i++) {
   const y = startInventoryY + row * (50 + inventoryPadding);
 
   allInventorySlots.push(new inventorySlot(x, y, 50, 50, null));
+}
+
+allEquipedSlots.push(new inventorySlot(canvas.width / 2, 100, 50, 50, null));
+const armorSlot = new inventorySlot(canvas.width / 1.75, 100, 50, 50, null);
+armorSlot.visible = true
+
+for (let slot of allEquipedSlots) {
+  slot.visible = true;
 }
 
 // allInventorySlots.push(new inventorySlot(150, 250, 50, 50, true))
@@ -805,6 +879,16 @@ function toggleInventory() {
   for (let slot of allInventorySlots) {
     slot.visible = !slot.visible;
   }
+  for (let item of hudItems) {
+    // console.log(`Item Visibility: ${ item.visible }`)
+    // console.log(item.text)
+    if (item.text.includes("Item")) {
+      // console.log(item.text)
+      if (item.visible === 'true') console.log(`Visible`)
+    // console.log(`Item Visibility Check 2: ${ item.visible }`)
+      item.visible = false;
+    }
+  }
 }
 
 function checkInventorySlotsClicked(mouseX, mouseY) {
@@ -847,6 +931,11 @@ function checkInventorySlotsClicked(mouseX, mouseY) {
           fetchItem("ax");
           return true;
         }
+        if (slot.item === sickleImg) {
+          player.currentItem = sickleImg;
+          fetchItem("sickle");
+          return true;
+        }
         if (slot.item === potatoImg) {
           if (healthAmount === 100 || healthAmount >= 100) {
             return true;
@@ -881,11 +970,10 @@ function checkInventorySlotsClicked(mouseX, mouseY) {
   }
   return false;
 }
-
+// #a208b98c
 // summonWaves(relativeX + 800)
-
 let lootpool = [potatoImg, blockImg];
-let mysteryBoxLootPool = [potatoImg, blockImg, spearImg, bowImg];
+let mysteryBoxLootPool = [potatoImg, blockImg, spearImg, bowImg, sickleImg, bowImg];
 const requiredScoreForMysteryBox = 950
 
 function checkObstaclesClicked(mouseX, mouseY) {
@@ -935,7 +1023,7 @@ function checkObstaclesClicked(mouseX, mouseY) {
               obstacle.image.src !== blockImg.src ||
               obstacle.image.src !== crateImg.src
             )
-              console.log(`Obstacle Image Exception: ${obstacle.image}`);
+              // console.log(`Obstacle Image Exception: ${obstacle.image}`);
             if (obstacle.image.src === blockImg.src) {
               const addedItem = addItemToInventory(blockImg);
               if (addedItem) {
@@ -962,8 +1050,8 @@ function checkObstaclesClicked(mouseX, mouseY) {
                 obstacle.image.src !== blockImg.src ||
                 obstacle.image.src !== crateImg.src
               )
-                console.log(`Obstacle Image Exception: ${obstacle.image}`);
-              console.log(`Obstacle Image Exception: ${obstacle.image}`);
+                // console.log(`Obstacle Image Exception: ${obstacle.image}`);
+              // console.log(`Obstacle Image Exception: ${obstacle.image}`);
               obstacles.splice(i, 1);
             }
           }
@@ -975,11 +1063,14 @@ function checkObstaclesClicked(mouseX, mouseY) {
 
 addItemToInventory(shovelImg);
 addItemToInventory(axImg);
-addItemToInventory(bowImg);
-addItemToInventory(blockImg);
-addItemToInventory(blockImg);
-addItemToInventory(potatoImg);
+// addItemToInventory(bowImg);
+// addItemToInventory(blockImg);
+// addItemToInventory(blockImg);
+// addItemToInventory(potatoImg);
+// addItemToInventory(sickleImg);
 // dealDamageToPlayer(5)
+// addItemToInventory(spearImg)
+
 
 function clearInventory() {
   for (let slot of allInventorySlots) {
@@ -1074,12 +1165,26 @@ window.addEventListener("keydown", (e) => {
 let lastAttackTime = 0;
 
 window.addEventListener("click", (event) => {
+  // startMenuEnabled = !startMenuEnabled;
   const rect = canvas.getBoundingClientRect();
   const mouseX = event.clientX - rect.left;
   const mouseY = event.clientY - rect.top;
   if (checkInventorySlotsClicked(mouseX, mouseY)) return;
   if (checkObstaclesClicked(mouseX, mouseY)) return;
-  // console.log(`Item: ${player.currentItem}\nCooldown: ${player.attackCooldownTime}`,);
+  // console.log(`Current Item: ${ player.currentItem.src }`)
+  if (player.currentItem.src === potatoImg.src) {
+    player.currentItem = false;
+    const slotWithPotato = allInventorySlots.find((s) => s.item === potatoImg);
+    if (!slotWithPotato) return;
+    if (healthAmount >= 100) return;
+    if (healthAmount <= 90) {
+      healthAmount += 10;
+    } else if (healthAmount < 100 && healthAmount > 90) {
+      healthAmount = 100
+    }
+    
+    slotWithPotato.item = false;
+  }
   if (player.attackCooldown < player.attackCooldownTime) {
     return;
   } else {
@@ -1119,7 +1224,7 @@ window.addEventListener("keydown", (event) => {
     const slot = allInventorySlots[0];
     if (slot && slot.item) {
       player.currentItem = slot.item;
-      fetchItem("shovel");
+      // fetchItem("shovel");
     } else {
       player.currentItem = false;
       fetchItem("hand");
@@ -1129,7 +1234,7 @@ window.addEventListener("keydown", (event) => {
     const slot = allInventorySlots[1];
     if (slot && slot.item) {
       player.currentItem = slot.item;
-      fetchItem("ax");
+      // fetchItem("ax");
     } else {
       player.currentItem = false;
       fetchItem("hand");
@@ -1139,7 +1244,8 @@ window.addEventListener("keydown", (event) => {
     const slot = allInventorySlots[2];
     if (slot && slot.item) {
       player.currentItem = slot.item;
-      fetchItem("bow");
+      // console.log(player.currentItem)
+      
     } else {
       player.currentItem = false;
       fetchItem("hand");
@@ -1201,13 +1307,27 @@ function update() {
     }
   }
 
+  armorSlot.item = player.bodyImg
+
   const deadEnemy = enemies.filter((enemy) => enemy.health <= 0);
   deadEnemy.forEach((enemy) => {
-    player.score += 100
-    console.log(player.score)
+    player.score += scoreIncrementAmount
+    // console.log(player.score)
   });
 
   enemies = enemies.filter((enemy) => enemy.health > 0);
+
+  if (player.currentItem === bowImg) {
+    fetchItem("bow");
+  } else if (player.currentItem === shovelImg) {
+    fetchItem("shovel");
+  } else if (player.currentItem === blockImg) {
+    fetchItem("block");
+  } else if (player.currentItem === axImg) {
+    fetchItem("ax");
+  } else if (player.currentItem === sickleImg) {
+    fetchItem("sickle");
+  }
 
   if (healthAmount > 100) {
     healthAmount = 100;
@@ -1241,6 +1361,11 @@ function update() {
 
   for (let enemy of flyingEnemies) {
     enemy.update();
+  }
+
+  for (let slot of allEquipedSlots) {
+    // console.log(`Curent Item: ${ player.currentItem }`)
+    slot.item = player.currentItem
   }
 
   for (let i = projectiles.length - 1; i >= 0; i--) {
@@ -1340,50 +1465,65 @@ function update() {
 }
 
 function draw() {
-  drawBackground();
+  // drawBackground();
+  backgroundForest.draw(ctx)
 
   // ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (let ghost of ghostObstacles) {
-    ghost.draw(ctx);
-  }
-
-  obstacles.forEach((obstacle) => obstacle.draw(ctx));
-
-  for (let enemy of flyingEnemies) {
-    enemy.draw(ctx);
-  }
-
-  // ghostObstacles.forEach(ghost => ghost.draw(ctx));
-
-  allInventorySlots.forEach((inventorySlot) => inventorySlot.draw(ctx));
-
-  // playerHealth.draw(ctx)
-  for (let item of hudItems) {
-    item.draw(ctx);
-  }
-
-  for (let i = projectiles.length - 1; i >= 0; i--) {
-    const p = projectiles[i];
-    p.update();
-    p.draw(ctx);
-
-    if (
-      p.x < -p.width ||
-      p.x > canvas.width + p.width ||
-      p.y < -p.height ||
-      p.y > canvas.height + p.height
-    ) {
-      projectiles.splice(i, 1);
+  if (gameEnabled) {
+    for (let ghost of ghostObstacles) {
+      ghost.draw(ctx);
     }
-  }
 
-  enemies.forEach((enemy) => enemy.draw(ctx));
-  // newEnemy.draw(ctx)
-  player.draw(ctx);
+    obstacles.forEach((obstacle) => obstacle.draw(ctx));
+
+    for (let enemy of flyingEnemies) {
+      enemy.draw(ctx);
+    }
+
+    // ghostObstacles.forEach(ghost => ghost.draw(ctx));
+
+    allInventorySlots.forEach((inventorySlot) => inventorySlot.draw(ctx));
+
+    armorSlot.draw(ctx);
+
+    allEquipedSlots.forEach((inventorySlot) => inventorySlot.draw(ctx));
+
+    // playerHealth.draw(ctx)
+    for (let item of hudItems) {
+      item.draw(ctx);
+    }
+
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+      const p = projectiles[i];
+      p.update();
+      p.draw(ctx);
+
+      if (
+        p.x < -p.width ||
+        p.x > canvas.width + p.width ||
+        p.y < -p.height ||
+        p.y > canvas.height + p.height
+      ) {
+        projectiles.splice(i, 1);
+      }
+    }
+
+    enemies.forEach((enemy) => enemy.draw(ctx));
+    // newEnemy.draw(ctx)
+    player.draw(ctx);
+  }
+}
+
+function updateBackground() {
+  moveBackground()
 }
 
 function gameLoop() {
-  update();
+  if (gameEnabled) {
+    update();
+  } else {
+    updateBackground()
+  }
   draw();
 
   requestAnimationFrame(gameLoop);

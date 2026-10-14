@@ -8,7 +8,7 @@
     },
     "ax": {
         "name": "ax",
-        "damage": 1.75,
+        "damage": 2,
         "description": "Medium damage but bad range. Can break obstacles.",
         "range": 75,
         "cooldown": 40
@@ -22,7 +22,7 @@
     },
     "spear": {
         "name": "spear",
-        "damage": 2,
+        "damage": 2.5,
         "description": "Strong damage and good range.",
         "range": 150,
         "cooldown": 55
@@ -47,5 +47,12 @@
         "description": "A food that never completely fulfills you, but will heal you.",
         "range": 100,
         "cooldown": 1
+    },
+    "sickle": {
+        "name": "sickle",
+        "damage": 1.5,
+        "description": "Medium range, and medium damage. Fast attack speed.",
+        "range": 75,
+        "cooldown": 20
     }
 }
