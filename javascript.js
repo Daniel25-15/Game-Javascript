@@ -24,6 +24,7 @@ async function changeArmorColor(bodyColor, armorColor, helmetColor) {
 }
 
 const startGameButton = document.getElementById('start-game-button');
+// if (!startMenuEnabled) startGameButton.style.display = 'none';
 
 startGameButton.addEventListener('click', (event) => {
   startMenuEnabled = false;
@@ -1312,6 +1313,10 @@ window.addEventListener("keydown", (e) => {
     toggleInventory(playerImg);
   }
 });
+
+  startMenuEnabled = false;
+  gameEnabled = true;
+  startGameButton.style.display = 'none';
 
 function update() {
   if (keys["ArrowRight"] || keys["d"] || movingRight) moveRight();
