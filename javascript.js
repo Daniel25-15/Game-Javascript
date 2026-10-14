@@ -25,11 +25,13 @@ async function changeArmorColor(bodyColor, armorColor, helmetColor) {
 
 const startGameButton = document.getElementById('start-game-button');
 
-startGameButton.addEventListener('click', () => {
+startGameButton.addEventListener('click', (event) => {
   startMenuEnabled = false;
   gameEnabled = true;
   startGameButton.style.display = 'none';
 });
+startGameButton.addEventListener('touchend', (event) => {event.preventDefault();startMenuEnabled = false;gameEnabled = true;startGameButton.style.display = 'none';});
+
 
 // document.body.appendChild(startGameButton);
 
